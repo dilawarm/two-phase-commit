@@ -3,8 +3,18 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"net"
+	"os"
+	"strconv"
+	"strings"
 
 	_ "github.com/go-sql-driver/mysql"
+)
+
+const (
+	CONN_HOST = "localhost"
+	CONN_PORT = "3333"
+	CONN_TYPE = "tcp"
 )
 
 type Wallet struct {
@@ -18,13 +28,28 @@ func errorHandler(err error) {
 	}
 }
 
-func main() {
-	// Disse verdiene skal servicen få fra Coordinator via TCP
-	// TODO: Sette opp TCP server for å hente verdier fra Coordinator
+func handlePrepare(conn net.Conn) *sql.Tx {
 
-	user_id := 1
+	buf := make([]byte, 2048)
+
+	_, err := conn.Read(buf)
+
+	if err != nil {
+		fmt.Println("Error reading:", err.Error())
+	}
+
+	message := string(buf)
+	temp := strings.Split(message, " ") // temp[0] = transaction_id, temp[1] = user_id, temp[2] = price.
+	fmt.Println(temp)
+	transaction_id, _ := strconv.Atoi(temp[0])
+	user_id, _ := strconv.Atoi(temp[1])
 	price := 50
-	transaction_id := 69
+
+	fmt.Println(transaction_id, user_id, price)
+
+	if err != nil {
+		fmt.Println("Error reading:", err.Error())
+	}
 
 	db, err := sql.Open("mysql", "dilawar:passord123@tcp(127.0.0.1:3306)/wallet_service")
 	errorHandler(err)
@@ -46,30 +71,69 @@ func main() {
 
 	tx, err := db.Begin()
 	errorHandler(err)
+
 	res, err := tx.Exec("UPDATE wallet SET balance=? WHERE user_id=?", wallet.Balance-price, user_id)
+	fmt.Println(res.RowsAffected())
 	errorHandler(err)
 
 	if wallet.Balance-price >= 0 {
-		fmt.Println("OK PREP", transaction_id) // skal sendes til Coordinator
-
 		if err != nil {
 			tx.Rollback()
 			panic(err.Error())
 		}
 
-		rows, err := res.RowsAffected()
-		errorHandler(err)
-
-		fmt.Println("Rows :", rows)
-
-		errorHandler(tx.Commit())
-
-		fmt.Println("OK COMMIT", transaction_id) // skal sendes til Coordinator
+		conn.Write([]byte("OK PREP " + strconv.Itoa(transaction_id)))
+		conn.Close()
+		return tx
 
 	} else {
 		tx.Rollback()
 		panic(err.Error())
 	}
+}
 
-	fmt.Println("Done.")
+func handleCommit(conn net.Conn, tx *sql.Tx) {
+
+	buf := make([]byte, 1024)
+
+	_, err := conn.Read(buf)
+
+	if err != nil {
+		fmt.Println("Error reading:", err.Error())
+	}
+
+	temp := strings.Split(string(buf), " ") // temp[0] = "Commit", temp[1] = transaction_id
+	transaction_id, _ := strconv.Atoi(temp[1])
+
+	errorHandler(tx.Commit())
+
+	conn.Write([]byte("OK Commit " + strconv.Itoa(transaction_id)))
+	conn.Close()
+}
+
+func main() {
+	l, err := net.Listen(CONN_TYPE, CONN_HOST+":"+CONN_PORT)
+	if err != nil {
+		fmt.Println("Error listening:", err.Error())
+		os.Exit(1)
+	}
+
+	defer l.Close()
+	fmt.Println("Listening on " + CONN_HOST + ":" + CONN_PORT)
+	prepared := false
+	var tx *sql.Tx
+	for {
+		conn, err := l.Accept()
+		if err != nil {
+			fmt.Println("Error accepting: ", err.Error())
+			os.Exit(1)
+		}
+		if !prepared {
+			tx = handlePrepare(conn)
+			prepared = true
+		} else {
+			go handleCommit(conn, tx)
+			prepared = false
+		}
+	}
 }
