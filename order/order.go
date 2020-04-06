@@ -23,52 +23,87 @@ type Order struct {
 	Amount  int `json:"amount"`
 }
 
+type Prep struct {
+	Id int
+	Tx *sql.Tx
+}
+
 func errorHandler(err error) {
 	if err != nil {
 		panic(err.Error())
 	}
 }
 
-func handlePrepare(conn net.Conn, password string) *sql.Tx {
+func handlePrepare(conn net.Conn, password string) Prep {
 	p := make([]byte, 2048)
 	_, err := conn.Read(p)
 
 	if err != nil {
-		fmt.Println("Error reading: ", err.Error())
+		fmt.Println("Error reading:", err.Error())
+		conn.Write([]byte(strconv.Itoa(3))) // 3 = Error reading
+		conn.Close()
+		return Prep{3, nil}
 	}
+
 	message := string(p[:2048])
+	fmt.Println(message)
 	temp := strings.Split(message, " ")
 	user_id, _ := strconv.Atoi(temp[0])
 	amount, _ := strconv.Atoi(temp[1])
 
+	db, err := sql.Open("mysql", "haavasma:CaMGxsUt@tcp(127.0.0.1:3306)/haavasma")
 	if err != nil {
-		fmt.Println("Error reading:", err.Error())
+		conn.Write([]byte(strconv.Itoa(4))) // 4 = Error connecting to database
+		conn.Close()
+		return Prep{4, nil}
 	}
-
-	db, err := sql.Open("mysql", "haavasma:"+password+"@tcp(127.0.0.1:3306)/haavasma")
-	errorHandler(err)
 	defer db.Close()
 
-	var order Order
-	order.Amount = amount
-	order.User_id = user_id
-
 	tx, err := db.Begin()
-	errorHandler(err)
+	if err != nil {
+		conn.Write([]byte(strconv.Itoa(7))) //7 = could not start transaction
+		conn.Close()
+		fmt.Println(err.Error())
+		errorHandler(err)
+		return Prep{7, nil}
+	}
+
 	res, err := tx.Exec("INSERT INTO order (order_id, user_id, amount) VALUES (DEFAULT, ?, ?)", user_id, amount)
 	fmt.Println(res.RowsAffected())
-	errorHandler(err)
 
 	if err != nil {
 		tx.Rollback()
-		panic(err.Error())
+		conn.Write([]byte(strconv.Itoa(8))) // 8 = Could not lock row
+		conn.Close()
+		return Prep{8, nil}
 	}
-	conn.Write([]byte("1"))
+	conn.Write([]byte("1")) // 1 = OK PREP
 	conn.Close()
-	return tx
+	return Prep{1, tx}
+}
+
+func handleCommit(conn net.Conn, tx *sql.Tx) {
+	p := make([]byte, 1024)
+
+	_, err := conn.Read(p)
+
+	if err != nil {
+		conn.Write([]byte("10"))
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		conn.Write([]byte(strconv.Itoa(10))) // Could not Commit
+		conn.Close()
+		return
+	}
+
+	conn.Write([]byte(strconv.Itoa(2))) // 2 = OK COMMIT
+	conn.Close()
 }
 
 func main() {
+
 	data, err := ioutil.ReadFile("../.config")
 	if err != nil {
 		fmt.Println("File reading error", err)
@@ -87,6 +122,7 @@ func main() {
 	fmt.Println("Listening on " + CONN_HOST + ":" + CONN_PORT)
 	prepared := false
 	var tx *sql.Tx
+	var id int
 	for {
 		conn, err := socket.Accept()
 		if err != nil {
@@ -94,8 +130,13 @@ func main() {
 			os.Exit(1)
 		}
 		if !prepared {
-			tx = handlePrepare(conn, password)
+			prep := handlePrepare(conn, password)
+			id = prep.Id
+			tx = prep.Tx
 			prepared = true
+		} else if id == 1 && prepared {
+			handleCommit(conn, tx)
+			prepared = false
 		}
 	}
 }
