@@ -51,10 +51,9 @@ func handlePrepare(conn net.Conn, password string) Prep {
 	user_id, _ := strconv.Atoi(temp[0])
 	amount, _ := strconv.Atoi(temp[1])
 
-	db, err := sql.Open("mysql", "haavasma:CaMGxsUt@tcp(127.0.0.1:3306)/haavasma")
+	db, err := sql.Open("mysql", "haavasma:"+password+"@tcp(127.0.0.1:3306)/haavasma")
 	if err != nil {
 		conn.Write([]byte(strconv.Itoa(4))) // 4 = Error connecting to database
-		conn.Close()
 		return Prep{4, nil}
 	}
 	defer db.Close()
@@ -62,10 +61,7 @@ func handlePrepare(conn net.Conn, password string) Prep {
 	tx, err := db.Begin()
 	if err != nil {
 		conn.Write([]byte(strconv.Itoa(7))) //7 = could not start transaction
-		conn.Close()
-		fmt.Println(err.Error())
-		errorHandler(err)
-		return Prep{7, nil}
+		return Prep{7, tx}
 	}
 
 	res, err := tx.Exec("INSERT INTO order (order_id, user_id, amount) VALUES (DEFAULT, ?, ?)", user_id, amount)
@@ -74,32 +70,34 @@ func handlePrepare(conn net.Conn, password string) Prep {
 	if err != nil {
 		tx.Rollback()
 		conn.Write([]byte(strconv.Itoa(8))) // 8 = Could not lock row
-		conn.Close()
-		return Prep{8, nil}
+		return Prep{8, tx}
 	}
 	conn.Write([]byte("1")) // 1 = OK PREP
-	conn.Close()
 	return Prep{1, tx}
 }
 
 func handleCommit(conn net.Conn, tx *sql.Tx) {
-	p := make([]byte, 1024)
+	buf := make([]byte, 2048)
 
-	_, err := conn.Read(p)
+	_, err := conn.Read(buf)
 
 	if err != nil {
-		conn.Write([]byte("10"))
+		fmt.Println("Error reading:", err.Error())
 	}
-
-	err = tx.Commit()
-	if err != nil {
-		conn.Write([]byte(strconv.Itoa(10))) // Could not Commit
-		conn.Close()
-		return
+	message := string(buf[:2048])
+	temp := strings.Split(message, " ")
+	id, _ := strconv.Atoi(temp[0])
+	if id == 1 {
+		err = tx.Commit()
+		if err != nil {
+			conn.Write([]byte(strconv.Itoa(10))) // Could not COMMIT
+		}
+		conn.Write([]byte(strconv.Itoa(2))) // 2 = OK COMMIT
+	} else if tx != nil {
+		tx.Rollback()
+	} else {
+		fmt.Println("do nothing, transaction never started")
 	}
-
-	conn.Write([]byte(strconv.Itoa(2))) // 2 = OK COMMIT
-	conn.Close()
 }
 
 func main() {
@@ -109,8 +107,6 @@ func main() {
 		fmt.Println("File reading error", err)
 		os.Exit(1)
 	}
-	fmt.Println("Contents of file:")
-	fmt.Println(string(data))
 	password := string(data)
 
 	socket, err := net.Listen(CONN_TYPE, CONN_HOST+":"+CONN_PORT)
@@ -120,23 +116,20 @@ func main() {
 	}
 	defer socket.Close()
 	fmt.Println("Listening on " + CONN_HOST + ":" + CONN_PORT)
-	prepared := false
-	var tx *sql.Tx
-	var id int
+
 	for {
 		conn, err := socket.Accept()
 		if err != nil {
 			fmt.Println("Error accepting: ", err.Error())
 			os.Exit(1)
 		}
-		if !prepared {
-			prep := handlePrepare(conn, password)
-			id = prep.Id
-			tx = prep.Tx
-			prepared = true
-		} else if id == 1 && prepared {
-			handleCommit(conn, tx)
-			prepared = false
-		}
+		go prepareAndCommit(conn, password)
 	}
+}
+
+func prepareAndCommit(conn net.Conn, password string) {
+	prep := handlePrepare(conn, password) // skriver her til Coordinator
+	tx := prep.Tx
+	handleCommit(conn, tx)
+	conn.Close()
 }
