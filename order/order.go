@@ -8,6 +8,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 
 	_ "github.com/go-sql-driver/mysql"
 )
@@ -24,9 +25,17 @@ type Order struct {
 }
 
 type Prep struct {
-	Id int
-	Tx *sql.Tx
+	Id      int
+	Tx      *sql.Tx
+	User_id int
 }
+
+type List struct {
+	list []int
+	mux  sync.Mutex
+}
+
+var preparedList List
 
 func errorHandler(err error) {
 	if err != nil {
@@ -42,7 +51,7 @@ func handlePrepare(conn net.Conn, password string) Prep {
 		fmt.Println("Error reading:", err.Error())
 		conn.Write([]byte(strconv.Itoa(3))) // 3 = Error reading
 		conn.Close()
-		return Prep{3, nil}
+		return Prep{3, nil, 0}
 	}
 
 	message := string(p[:2048])
@@ -51,32 +60,39 @@ func handlePrepare(conn net.Conn, password string) Prep {
 	user_id, _ := strconv.Atoi(temp[0])
 	amount, _ := strconv.Atoi(temp[1])
 
+	preparedList.mux.Lock()
+	for _, n := range preparedList.list {
+		if user_id == n {
+			preparedList.mux.Unlock()
+			return Prep{11, nil, 0}
+		}
+	}
+	preparedList.list = append(preparedList.list, user_id)
+
+	preparedList.mux.Unlock()
+
 	db, err := sql.Open("mysql", "haavasma:"+password+"@tcp(127.0.0.1:3306)/haavasma")
 	if err != nil {
-		conn.Write([]byte(strconv.Itoa(4))) // 4 = Error connecting to database
-		return Prep{4, nil}
+		return Prep{4, nil, user_id}
 	}
 	defer db.Close()
 
 	tx, err := db.Begin()
-	if err != nil {
-		conn.Write([]byte(strconv.Itoa(7))) //7 = could not start transaction
-		return Prep{7, tx}
+	if err != nil { //7 = could not start transaction
+		return Prep{7, tx, user_id}
 	}
 
 	res, err := tx.Exec("INSERT INTO order (order_id, user_id, amount) VALUES (DEFAULT, ?, ?)", user_id, amount)
 	fmt.Println(res.RowsAffected())
 
 	if err != nil {
-		tx.Rollback()
-		conn.Write([]byte(strconv.Itoa(8))) // 8 = Could not lock row
-		return Prep{8, tx}
+		tx.Rollback() // 8 = Could not lock row
+		return Prep{8, tx, user_id}
 	}
-	conn.Write([]byte("1")) // 1 = OK PREP
-	return Prep{1, tx}
+	return Prep{1, tx, user_id}
 }
 
-func handleCommit(conn net.Conn, tx *sql.Tx) {
+func handleCommit(conn net.Conn, tx *sql.Tx, user_id int) {
 	buf := make([]byte, 2048)
 
 	_, err := conn.Read(buf)
@@ -98,10 +114,19 @@ func handleCommit(conn net.Conn, tx *sql.Tx) {
 	} else {
 		fmt.Println("do nothing, transaction never started")
 	}
+	preparedList.mux.Lock()
+	for i := 0; i < len(preparedList.list); i++ {
+		if user_id == preparedList.list[i] {
+			preparedList.list[i] = preparedList.list[len(preparedList.list)-1] // Copy last element to index i.
+			preparedList.list[len(preparedList.list)-1] = 0                    // Erase last element (write zero value).
+			preparedList.list = preparedList.list[:len(preparedList.list)-1]
+		}
+	}
+	preparedList.mux.Unlock()
 }
 
 func main() {
-
+	preparedList = List{list: []int{}}
 	data, err := ioutil.ReadFile("../.config")
 	if err != nil {
 		fmt.Println("File reading error", err)
@@ -130,6 +155,8 @@ func main() {
 func prepareAndCommit(conn net.Conn, password string) {
 	prep := handlePrepare(conn, password) // skriver her til Coordinator
 	tx := prep.Tx
-	handleCommit(conn, tx)
+	user_id := prep.User_id
+	conn.Write([]byte(strconv.Itoa(prep.Id)))
+	handleCommit(conn, tx, user_id)
 	conn.Close()
 }
