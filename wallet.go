@@ -2,12 +2,12 @@ package main
 
 import (
 	"database/sql"
-	"encoding/binary"
 	"fmt"
 	"net"
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 
 	_ "github.com/go-sql-driver/mysql"
 )
@@ -24,30 +24,34 @@ type Wallet struct {
 }
 
 type Prep struct {
-	Id int
-	Tx *sql.Tx
+	Id      int
+	Tx      *sql.Tx
+	User_id int
 }
+
+type SafeCounter struct {
+	v   []int
+	mux sync.Mutex
+}
+
+var c SafeCounter
 
 func errorHandler(err error) {
 	if err != nil {
 		panic(err.Error())
 	}
 }
-
 func handlePrepare(conn net.Conn) Prep {
-
-	buf := make([]byte, 1024)
+	buf := make([]byte, 2048)
 
 	_, err := conn.Read(buf)
 
-	data := binary.BigEndian.Uint64(buf)
-	fmt.Println(data)
-
 	if err != nil {
 		fmt.Println("Error reading:", err.Error())
+		return Prep{10, nil, 0}
 	}
 
-	message := string(buf[:1024])
+	message := string(buf[:2048])
 	temp := strings.Split(message, " ")
 	user_id, _ := strconv.Atoi(temp[0])
 	price, _ := strconv.Atoi(temp[1])
@@ -56,25 +60,31 @@ func handlePrepare(conn net.Conn) Prep {
 
 	if err != nil {
 		fmt.Println("Error reading:", err.Error())
-		conn.Write([]byte(strconv.Itoa(3))) // 3 = Error reading
-		conn.Close()
-		return Prep{3, nil}
+		return Prep{3, nil, user_id}
 	}
-
+	c.mux.Lock()
+	for _, n := range c.v {
+		if user_id == n {
+			fmt.Println("user_id already in list of prepared transactions")
+			c.mux.Unlock()
+			return Prep{11, nil, user_id}
+		}
+	}
+	fmt.Println(c.v)
+	c.v = append(c.v, user_id)
+	c.mux.Unlock()
 	db, err := sql.Open("mysql", "dilawar:passord123@tcp(127.0.0.1:3306)/wallet_service")
 	if err != nil {
-		conn.Write([]byte(strconv.Itoa(4))) // 4 = Error connecting to database
-		conn.Close()
-		return Prep{4, nil}
+		//conn.Write([]byte(strconv.Itoa(4))) // 4 = Error connecting to database
+		return Prep{4, nil, user_id}
 	}
 
 	defer db.Close()
 
 	results, err := db.Query("SELECT * FROM wallet WHERE user_id=?", user_id)
 	if err != nil {
-		conn.Write([]byte(strconv.Itoa(5))) // 5 = NO user with that user_id
-		conn.Close()
-		return Prep{5, nil}
+		//conn.Write([]byte(strconv.Itoa(5))) // 5 = NO user with that user_id
+		return Prep{5, nil, user_id}
 	}
 
 	var wallet Wallet
@@ -82,18 +92,16 @@ func handlePrepare(conn net.Conn) Prep {
 
 		err = results.Scan(&wallet.User_id, &wallet.Balance)
 		if err != nil {
-			conn.Write([]byte(strconv.Itoa(6))) // 6 = Wrong format on wallet object
-			conn.Close()
-			return Prep{6, nil}
+			//conn.Write([]byte(strconv.Itoa(6))) // 6 = Wrong format on wallet object
+			return Prep{6, nil, user_id}
 		}
 	}
 	fmt.Println("Wallet :", wallet)
 
 	tx, err := db.Begin()
 	if err != nil {
-		conn.Write([]byte(strconv.Itoa(7))) // Could not start transaction
-		conn.Close()
-		return Prep{7, nil}
+		//conn.Write([]byte(strconv.Itoa(7))) // Could not start transaction
+		return Prep{7, tx, user_id}
 	}
 
 	res, err := tx.Exec("UPDATE wallet SET balance=? WHERE user_id=?", wallet.Balance-price, user_id)
@@ -102,44 +110,51 @@ func handlePrepare(conn net.Conn) Prep {
 	if wallet.Balance-price >= 0 {
 		if err != nil {
 			tx.Rollback()
-			conn.Write([]byte(strconv.Itoa(8))) // 8 = Could not lock row
-			conn.Close()
-			return Prep{8, nil}
+			//conn.Write([]byte(strconv.Itoa(8))) // 8 = Could not lock row
+			return Prep{8, tx, user_id}
 		}
-
-		conn.Write([]byte(strconv.Itoa(1))) // 1 = OK PREP
-		conn.Close()
-		return Prep{1, tx}
-
+		return Prep{1, tx, user_id}
 	} else {
 		tx.Rollback()
-		conn.Write([]byte(strconv.Itoa(9))) // 9 = balance < price
-		conn.Close()
-		return Prep{9, nil}
+
+		return Prep{9, tx, user_id}
 	}
 }
 
-func handleCommit(conn net.Conn, tx *sql.Tx) {
+func handleCommit(conn net.Conn, tx *sql.Tx, user_id int) {
 
-	buf := make([]byte, 1024)
-
+	buf := make([]byte, 2048)
 	_, err := conn.Read(buf)
-
 	if err != nil {
 		fmt.Println("Error reading:", err.Error())
 	}
-
-	err = tx.Commit()
-	if err != nil {
-		conn.Write([]byte(strconv.Itoa(10))) // Could not COMMIT
-		conn.Close()
+	message := string(buf[:2048])
+	temp := strings.Split(message, " ")
+	id, _ := strconv.Atoi(temp[0])
+	if id == 1 {
+		err = tx.Commit()
+		if err != nil {
+			conn.Write([]byte(strconv.Itoa(10))) // Could not COMMIT
+		}
+		conn.Write([]byte(strconv.Itoa(2))) // 2 = OK COMMIT
+	} else if tx != nil {
+		tx.Rollback()
+	} else {
+		fmt.Println("do nothing, transaction never started")
 	}
-
-	conn.Write([]byte(strconv.Itoa(2))) // 2 = OK COMMIT
-	conn.Close()
+	c.mux.Lock()
+	for i := 0; i < len(c.v); i++ {
+		if user_id == c.v[i] {
+			c.v[i] = c.v[len(c.v)-1] // Copy last element to index i.
+			c.v[len(c.v)-1] = 0      // Erase last element (write zero value).
+			c.v = c.v[:len(c.v)-1]
+		}
+	}
+	c.mux.Unlock()
 }
 
 func main() {
+	c = SafeCounter{v: []int{}}
 	l, err := net.Listen(CONN_TYPE, CONN_HOST+":"+CONN_PORT)
 	if err != nil {
 		fmt.Println("Error listening:", err.Error())
@@ -148,23 +163,22 @@ func main() {
 
 	defer l.Close()
 	fmt.Println("Listening on " + CONN_HOST + ":" + CONN_PORT)
-	prepared := false
-	var tx *sql.Tx
-	var id int
 	for {
 		conn, err := l.Accept()
+
 		if err != nil {
 			fmt.Println("Error accepting: ", err.Error())
 			os.Exit(1)
 		}
-		if !prepared {
-			prep := handlePrepare(conn)
-			id = prep.Id
-			tx = prep.Tx
-			prepared = true
-		} else if id == 1 && prepared {
-			handleCommit(conn, tx)
-			prepared = false
-		}
+		go prepareAndCommit(conn)
 	}
+}
+
+func prepareAndCommit(conn net.Conn) {
+	prep := handlePrepare(conn) // skriver her til Coordinator
+	tx := prep.Tx
+	user_id := prep.User_id
+	conn.Write([]byte(strconv.Itoa(prep.Id)))
+	handleCommit(conn, tx, user_id)
+	conn.Close()
 }
