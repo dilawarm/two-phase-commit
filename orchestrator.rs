@@ -29,6 +29,7 @@ fn main() {
 }
 
 fn handle_request(mut _client_stream: &TcpStream) -> bool {
+    let mut failed = false;
     // TCP connection duration before timeout
     let timeout = Duration::from_millis(5000);
 
@@ -39,22 +40,22 @@ fn handle_request(mut _client_stream: &TcpStream) -> bool {
     let mut wallet_stream = match TcpStream::connect_timeout(&wallet_socket, timeout) {
         Ok(stream) => stream,
         Err(e) => {
-            println!("Error: {}", e);
+            println!("Failed to create connection to wallet micro service: {}", e);
             return false;
         }
     };
     match wallet_stream.write(&account.to_be_bytes()){
         Ok(_result) => {},
         Err(e) => {
-            println!("Error: {}", e);
-            return false;
+            println!("Failed to write account id to wallet micro service: {}", e);
+            failed = true;
         }
     };
     match wallet_stream.write(&amount.to_be_bytes()){
         Ok(_result) => {},
         Err(e) => {
-            println!("Error: {}", e);
-            return false;
+            println!("Failed to write balance change amount to wallet micro service: {}", e);
+            failed = true;
         }
     };
 
@@ -67,30 +68,30 @@ fn handle_request(mut _client_stream: &TcpStream) -> bool {
     let mut order_stream = match TcpStream::connect_timeout(&order_socket, timeout) {
         Ok(stream) => stream,
         Err(e) => {
-            println!("Error: {}", e);
+            println!("Failed to create connection to order micro service: {}", e);
             return false;
         }
     };
     match order_stream.write(&user_id.to_be_bytes()){
         Ok(_result) => {},
         Err(e) => {
-            println!("Error: {}", e);
-            return false;
+            println!("Failed to write user id to order micro service: {}", e);
+            failed = true;
         }
     };
     match order_stream.write(&amount_of_items.to_be_bytes()){
         Ok(_result) => {},
         Err(e) => {
-            println!("Error: {}", e);
-            return false;
+            println!("Failed to write amount of items to order micro service: {}", e);
+            failed = true;
         }
     };
     for i in 0..amount_of_items {
         match order_stream.write(&items[i as usize].to_be_bytes()){
             Ok(_result) => {},
             Err(e) => {
-                println!("Error: {}", e);
-                return false;
+                println!("Failed to write item to order microservice: {}", e);
+                failed = true;
             }
         };
     }
@@ -101,17 +102,21 @@ fn handle_request(mut _client_stream: &TcpStream) -> bool {
     match wallet_stream.read(&mut wallet_response){
         Ok(_result) => {},
         Err(e) => {
-            println!("Error: {}", e);
-            return false;
+            println!("Failed to read wallet microservice \"ready to commit\" message: {}", e);
+            failed = true;
         }
     };
     match order_stream.read(&mut order_response){
         Ok(_result) => {},
         Err(e) => {
-            println!("Error: {}", e);
-            return false;
+            println!("Failed to read order microservice \"ready to commit\" message: {}", e);
+            failed = true;
         }
     };
+    if failed {
+        rollback(order_stream, wallet_stream);
+        return false;
+    }
 
     if order_response[0] == 1 && wallet_response[0] == 1 {
         // Both services ready, go ahead and commit
@@ -119,36 +124,47 @@ fn handle_request(mut _client_stream: &TcpStream) -> bool {
         match wallet_stream.write(&commit_message){
             Ok(_result) => {},
             Err(e) => {
-                println!("Error: {}", e);
-                return false;
+                println!("Order microservice write failed: {}", e);
+                failed = true;
             }
         };
         match order_stream.write(&commit_message){
             Ok(_result) => {},
             Err(e) => {
-                println!("Error: {}", e);
-                return false;
+                println!("Second order microservice write failed: {}", e);
+                failed = true;
             }
         };
+        if failed {
+            rollback(order_stream, wallet_stream);
+            return false;
+        }
         return true;
     }
     else {
-        // Error, rollback
+        rollback(order_stream, wallet_stream);
+        return false;
+    }
+}
+
+fn rollback(mut order_stream: TcpStream, mut wallet_stream: TcpStream){
+    let mut fails = 0;
+    while fails < 5 {
         let rollback_message = [2u8];
         match wallet_stream.write(&rollback_message){
             Ok(_result) => {},
             Err(e) => {
-                println!("Error: {}", e);
-                return false;
+                println!("Wallet microservice rollback write failed: {}", e);
+                fails += 1;
             }
         };
         match order_stream.write(&rollback_message){
             Ok(_result) => {},
             Err(e) => {
-                println!("Error: {}", e);
-                return false;
+                println!("Order microservice rollback write failed: {}", e);
+                fails += 1;
             }
         };
-        return false;
     }
+    println!("NB: Rollback Failed!");
 }
