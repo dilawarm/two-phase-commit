@@ -9,7 +9,7 @@ import (
 
 func main() {
 	p := make([]byte, 2048)
-	conn, err := net.Dial("tcp", "localhost:3334")
+	conn, err := net.Dial("tcp", "localhost:3333")
 	for {
 		if err != nil {
 			fmt.Printf("Some error %v", err)
