@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"io/ioutil"
 	"net"
 	"os"
 	"strconv"
@@ -41,7 +42,7 @@ func errorHandler(err error) {
 		panic(err.Error())
 	}
 }
-func handlePrepare(conn net.Conn) Prep {
+func handlePrepare(conn net.Conn, password string) Prep {
 	buf := make([]byte, 2048)
 
 	_, err := conn.Read(buf)
@@ -73,7 +74,7 @@ func handlePrepare(conn net.Conn) Prep {
 	fmt.Println(c.v)
 	c.v = append(c.v, user_id)
 	c.mux.Unlock()
-	db, err := sql.Open("mysql", "dilawar:passord123@tcp(127.0.0.1:3306)/wallet_service")
+	db, err := sql.Open("mysql", "dilawar:"+password+"@tcp(127.0.0.1:3306)/wallet_service")
 	if err != nil {
 		//conn.Write([]byte(strconv.Itoa(4))) // 4 = Error connecting to database
 		return Prep{4, nil, user_id}
@@ -83,7 +84,7 @@ func handlePrepare(conn net.Conn) Prep {
 
 	results, err := db.Query("SELECT * FROM wallet WHERE user_id=?", user_id)
 	if err != nil {
-		//conn.Write([]byte(strconv.Itoa(5))) // 5 = NO user with that user_id
+		//conn.Write([]byte(strconv.Itoa(5))) // Query went wrong
 		return Prep{5, nil, user_id}
 	}
 
@@ -97,6 +98,9 @@ func handlePrepare(conn net.Conn) Prep {
 		}
 	}
 	fmt.Println("Wallet :", wallet)
+	if wallet.User_id == 0 { // No user
+		return Prep{12, nil, user_id}
+	}
 
 	tx, err := db.Begin()
 	if err != nil {
@@ -116,7 +120,6 @@ func handlePrepare(conn net.Conn) Prep {
 		return Prep{1, tx, user_id}
 	} else {
 		tx.Rollback()
-
 		return Prep{9, tx, user_id}
 	}
 }
@@ -155,6 +158,13 @@ func handleCommit(conn net.Conn, tx *sql.Tx, user_id int) {
 
 func main() {
 	c = SafeCounter{v: []int{}}
+	data, err := ioutil.ReadFile(".config")
+	if err != nil {
+		fmt.Println("File reading error", err)
+		os.Exit(1)
+	}
+	password := string(data)
+
 	l, err := net.Listen(CONN_TYPE, CONN_HOST+":"+CONN_PORT)
 	if err != nil {
 		fmt.Println("Error listening:", err.Error())
@@ -170,12 +180,12 @@ func main() {
 			fmt.Println("Error accepting: ", err.Error())
 			os.Exit(1)
 		}
-		go prepareAndCommit(conn)
+		go prepareAndCommit(conn, password)
 	}
 }
 
-func prepareAndCommit(conn net.Conn) {
-	prep := handlePrepare(conn) // skriver her til Coordinator
+func prepareAndCommit(conn net.Conn, password string) {
+	prep := handlePrepare(conn, password) // skriver her til Coordinator
 	tx := prep.Tx
 	user_id := prep.User_id
 	conn.Write([]byte(strconv.Itoa(prep.Id)))
