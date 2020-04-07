@@ -48,7 +48,7 @@ func handlePrepare(conn net.Conn, password string) micro.Prep {
 
 	micro.PreparedList.Mux.Unlock()
 
-	db, err := sql.Open("mysql", "haavasma:"+password+"@tcp(127.0.0.1:3306)/haavasma")
+	db, err := sql.Open("mysql", "haavasma:"+password+"@tcp(localhost:3306)/order_service")
 	if err != nil {
 		return micro.Prep{4, nil, user_id}
 	}
@@ -59,13 +59,12 @@ func handlePrepare(conn net.Conn, password string) micro.Prep {
 		return micro.Prep{7, tx, user_id}
 	}
 
-	res, err := tx.Exec("INSERT INTO order (order_id, user_id, amount) VALUES (DEFAULT, ?, ?)", user_id, amount)
-	fmt.Println(res.RowsAffected())
-
+	res, err := tx.Exec("INSERT INTO `order` (order_id, user_id, amount) VALUES (DEFAULT, ?, ?)", user_id, amount)
 	if err != nil {
 		tx.Rollback() // 8 = Could not lock row
 		return micro.Prep{8, tx, user_id}
 	}
+	fmt.Println(res.RowsAffected())
 	return micro.Prep{1, tx, user_id}
 }
 
