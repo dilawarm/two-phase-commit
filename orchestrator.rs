@@ -54,6 +54,7 @@ fn handle_request(mut _client_stream: &TcpStream) -> bool {
     // Wallet micro service preperation
     let account = 1u32;
     let amount = 100i32;
+    let space = 32u8;
     match wallet_stream.write(&account.to_be_bytes()){
         Ok(_result) => {},
         Err(e) => {
@@ -65,6 +66,13 @@ fn handle_request(mut _client_stream: &TcpStream) -> bool {
         Ok(_result) => {},
         Err(e) => {
             println!("Failed to write balance change amount to wallet micro service: {}", e);
+            failed = true;
+        }
+    };
+    match wallet_stream.write(&[space]){
+        Ok(_result) => {},
+        Err(e) => {
+            println!("Failed to write space char to wallet micro service: {}", e);
             failed = true;
         }
     };
@@ -97,6 +105,13 @@ fn handle_request(mut _client_stream: &TcpStream) -> bool {
             }
         };
     }
+    match order_stream.write(&[space]){
+        Ok(_result) => {},
+        Err(e) => {
+            println!("Failed to write space char to order micro service: {}", e);
+            failed = true;
+        }
+    };
 
     // Read response
     let mut wallet_response = [0u8];
