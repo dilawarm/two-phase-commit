@@ -20,7 +20,7 @@ fn main() {
         //let transaction_queue = HashMap::new();
         threads.push(thread::Builder::new().name("coordinator".to_string()).spawn(
             move || {
-                let mut tries = 0;
+                let mut tries = 1;
                 while !handle_request(&stream) && tries < 5 {
                     tries += 1;
                 }
