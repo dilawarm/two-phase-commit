@@ -85,7 +85,6 @@ fn handle_request() -> bool {
     // Wallet micro service preperation
     let account = 1u32;
     let amount = 100u32;
-    let space = 32u8;
     match wallet_stream.write(&account.to_be_bytes()) {
         Ok(_result) => {}
         Err(e) => {
@@ -103,18 +102,11 @@ fn handle_request() -> bool {
             failed = true;
         }
     };
-    match wallet_stream.write(&[space]) {
-        Ok(_result) => {}
-        Err(e) => {
-            println!("Failed to write space char to wallet micro service: {}", e);
-            failed = true;
-        }
-    };
 
     // Order micro service preperation
     let user_id = 1u32;
     let amount_of_items = 5u32;
-    let items = [1u32, 2u32, 3u32, 4u32, 5u32];
+    //let items = [1u32, 2u32, 3u32, 4u32, 5u32];
 
     match order_stream.write(&user_id.to_be_bytes()) {
         Ok(_result) => {}
@@ -133,7 +125,7 @@ fn handle_request() -> bool {
             failed = true;
         }
     };
-    for i in 0..amount_of_items {
+   /* for i in 0..amount_of_items {
         match order_stream.write(&items[i as usize].to_be_bytes()) {
             Ok(_result) => {}
             Err(e) => {
@@ -149,6 +141,7 @@ fn handle_request() -> bool {
             failed = true;
         }
     };
+    */
 
     // Read response
     let mut wallet_response = [0u8, 0u8];
@@ -182,17 +175,16 @@ fn handle_request() -> bool {
         return false;
     }
 
-    if order_response[1] == 1 && wallet_response[1] == 1 {
-        // Both services ready, go ahead and commit
-        let commit_message = [1u8];
-        match wallet_stream.write(&commit_message) {
+    if order_response[0] == 1 && wallet_response[0] == 1 {
+        let commit_message = 1u32;
+        match wallet_stream.write(&commit_message.to_be_bytes()) {
             Ok(_result) => {}
             Err(e) => {
                 println!("Wallet service failed to commit: {}", e);
                 failed = true;
             }
         };
-        match order_stream.write(&commit_message) {
+        match order_stream.write(&commit_message.to_be_bytes()) {
             Ok(_result) => {}
             Err(e) => {
                 println!("Order service failed to commit: {}", e);
@@ -213,15 +205,15 @@ fn handle_request() -> bool {
 fn rollback(mut order_stream: TcpStream, mut wallet_stream: TcpStream) {
     let mut fails = 0;
     while fails < 5 {
-        let rollback_message = [2u8];
-        match wallet_stream.write(&rollback_message) {
+        let rollback_message = 2u32;
+        match wallet_stream.write(&rollback_message.to_be_bytes()) {
             Ok(_result) => {}
             Err(e) => {
                 println!("Wallet microservice rollback write failed: {}", e);
                 fails += 1;
             }
         };
-        match order_stream.write(&rollback_message) {
+        match order_stream.write(&rollback_message.to_be_bytes()) {
             Ok(_result) => {}
             Err(e) => {
                 println!("Order microservice rollback write failed: {}", e);
