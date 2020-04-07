@@ -43,7 +43,8 @@ fn handle_request(mut client_stream: TcpStream) {
     wallet_stream.write(&account.to_be_bytes());
     wallet_stream.write(&amount.to_be_bytes());
 
-     // Order micro service preperation
+    // Order micro service preperation
+    let user_id = 1u32;
     let amount_of_items = 5u32;
     let items = [1u32, 2u32, 3u32, 4u32, 5u32];
 
@@ -55,6 +56,7 @@ fn handle_request(mut client_stream: TcpStream) {
             return;
         }
     };
+    order_stream.write(&user_id.to_be_bytes());
     order_stream.write(&amount_of_items.to_be_bytes());
     for i in 0..amount_of_items {
         order_stream.write(&items[i as usize].to_be_bytes());
