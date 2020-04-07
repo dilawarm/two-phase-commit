@@ -2,12 +2,12 @@ package main
 
 import (
 	"database/sql"
+	"encoding/binary"
 	"fmt"
 	"io/ioutil"
 	"net"
 	"os"
 	"strconv"
-	"strings"
 
 	"../micro"
 	_ "github.com/go-sql-driver/mysql"
@@ -21,7 +21,7 @@ type Order struct {
 }
 
 func handlePrepare(conn net.Conn, password string) micro.Prep {
-	p := make([]byte, 2048)
+	p := make([]byte, 28)
 	_, err := conn.Read(p)
 
 	if err != nil {
@@ -31,11 +31,13 @@ func handlePrepare(conn net.Conn, password string) micro.Prep {
 		return micro.Prep{3, nil, 0}
 	}
 
-	message := string(p[:2048])
-	fmt.Println(message)
-	temp := strings.Split(message, " ")
-	user_id, _ := strconv.Atoi(temp[0])
-	amount, _ := strconv.Atoi(temp[1])
+	data := binary.BigEndian.Uint32(p[:4])
+	user_id := int(data)
+
+	data = binary.BigEndian.Uint32(p[4:])
+	amount := int(data)
+
+	fmt.Println(user_id, amount)
 
 	micro.PreparedList.Mux.Lock()
 	for _, n := range micro.PreparedList.List {
@@ -48,7 +50,7 @@ func handlePrepare(conn net.Conn, password string) micro.Prep {
 
 	micro.PreparedList.Mux.Unlock()
 
-	db, err := sql.Open("mysql", "haavasma:"+password+"@tcp(localhost:3306)/order_service")
+	db, err := sql.Open("mysql", "dilawar:"+password+"@tcp(localhost:3306)/order_service")
 	if err != nil {
 		return micro.Prep{4, nil, user_id}
 	}
@@ -99,7 +101,13 @@ func prepareAndCommit(conn net.Conn, password string) {
 	prep := handlePrepare(conn, password) // skriver her til Coordinator
 	tx := prep.Tx
 	user_id := prep.User_id
-	conn.Write([]byte(strconv.Itoa(prep.Id)))
+	b := make([]byte, 2)
+	fmt.Println(prep.Id)
+	binary.LittleEndian.PutUint16(b, uint16(prep.Id))
+	conn.Write(b)
+	if prep.Id != 1 {
+		return
+	}
 	micro.HandleCommit(conn, tx, user_id)
 	conn.Close()
 }

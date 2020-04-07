@@ -27,7 +27,7 @@ const CONN_TYPE = "tcp"
 
 func HandleCommit(conn net.Conn, tx *sql.Tx, user_id int) {
 
-	buf := make([]byte, 2048)
+	buf := make([]byte, 2)
 	_, err := conn.Read(buf)
 	if err != nil {
 		fmt.Println("Error reading:", err.Error())

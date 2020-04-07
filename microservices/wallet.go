@@ -2,12 +2,11 @@ package main
 
 import (
 	"database/sql"
+	"encoding/binary"
 	"fmt"
 	"io/ioutil"
 	"net"
 	"os"
-	"strconv"
-	"strings"
 
 	"../micro"
 
@@ -22,7 +21,7 @@ type Wallet struct {
 }
 
 func handlePrepare(conn net.Conn, password string) micro.Prep {
-	buf := make([]byte, 2048)
+	buf := make([]byte, 8)
 
 	_, err := conn.Read(buf)
 
@@ -31,10 +30,16 @@ func handlePrepare(conn net.Conn, password string) micro.Prep {
 		return micro.Prep{10, nil, 0}
 	}
 
-	message := string(buf[:2048])
+	data := binary.BigEndian.Uint32(buf[:4])
+	user_id := int(data)
+	data = binary.BigEndian.Uint32(buf[4:])
+	price := int(data)
+	//fmt.Printf(user_id, price)
+	fmt.Println(user_id, price)
+	/*message := string(buf[:2048])
 	temp := strings.Split(message, " ")
-	user_id, _ := strconv.Atoi(temp[0])
-	price, _ := strconv.Atoi(temp[1])
+	//user_id, _ := strconv.Atoi(temp[0])
+	price, _ := strconv.Atoi(temp[1])*/
 
 	fmt.Println(user_id, price)
 
@@ -135,7 +140,13 @@ func prepareAndCommit(conn net.Conn, password string) {
 	prep := handlePrepare(conn, password) // skriver her til Coordinator
 	tx := prep.Tx
 	user_id := prep.User_id
-	conn.Write([]byte(strconv.Itoa(prep.Id)))
+	b := make([]byte, 2)
+	fmt.Println(prep.Id)
+	binary.LittleEndian.PutUint16(b, uint16(prep.Id))
+	conn.Write(b)
+	if prep.Id != 1 {
+		return
+	}
 	micro.HandleCommit(conn, tx, user_id)
 	conn.Close()
 }
