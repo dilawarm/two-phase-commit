@@ -4,6 +4,7 @@ use std::io::prelude::*;
 use std::net::{IpAddr, Ipv4Addr, SocketAddr, TcpListener, TcpStream};
 use std::sync::{Arc, Condvar, Mutex};
 use std::time::Duration;
+use std::{time};
 
 const WALLET_MS_IP: [u8; 4] = [127u8, 0u8, 0u8, 1u8];
 const WALLET_MS_PORT: u16 = 3333u16;
@@ -220,6 +221,10 @@ fn rollback(mut order_stream: TcpStream, mut wallet_stream: TcpStream) {
                 fails += 1;
             }
         };
+        let ten_millis = time::Duration::from_millis(10);
+        let now = time::Instant::now();
+        thread::sleep(ten_millis);
+        assert!(now.elapsed() >= ten_millis);
     }
     println!("NB: Rollback Failed!");
 }

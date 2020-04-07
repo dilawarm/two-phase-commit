@@ -15,22 +15,27 @@ type Prep struct {
 }
 
 type List struct {
-	List []int
+	List map[int]bool
 	Mux  sync.Mutex
 }
 
-var PreparedList List
+//var PreparedList List
 
 const CONN_HOST = "localhost"
 const CONN_TYPE = "tcp"
 
-func HandleCommit(conn net.Conn, tx *sql.Tx, user_id int) {
+func HandleCommit(conn net.Conn, tx *sql.Tx, user_id int, list List) {
 
 	buf := make([]byte, 4)
 	_, err := conn.Read(buf)
 	if err != nil {
 		fmt.Println("Error reading:", err.Error())
 	}
+	list.Mux.Lock()
+	fmt.Println("LISTE: ", list.List)
+	fmt.Println("USER_ID: ", user_id)
+	list.List[user_id] = false
+	list.Mux.Unlock()
 
 	data := binary.BigEndian.Uint32(buf[:4])
 	id := int(data)
@@ -40,23 +45,22 @@ func HandleCommit(conn net.Conn, tx *sql.Tx, user_id int) {
 		if err != nil {
 			b := make([]byte, 2)
 			binary.LittleEndian.PutUint16(b, uint16(10)) // Could not COMMIT
+			conn.Write(b)
 		}
 		b := make([]byte, 2)
-		binary.LittleEndian.PutUint16(b, uint16(2)) // 2 =																																																																																					 OK COMMIT
+		binary.LittleEndian.PutUint16(b, uint16(2)) // 2 =
+		conn.Write(b)
 	} else if tx != nil {
 		tx.Rollback()
 		fmt.Println("Transaction rolled back")
+		b := make([]byte, 2)
+		binary.LittleEndian.PutUint16(b, uint16(69))
+		conn.Write(b)
 	} else {
 		fmt.Println("do nothing, transaction never started")
+		b := make([]byte, 2)
+		binary.LittleEndian.PutUint16(b, uint16(69))
+		conn.Write(b)
 	}
-	PreparedList.Mux.Lock()
-	fmt.Println("LISTE: ", PreparedList.List)
-	for i := 0; i < len(PreparedList.List); i++ {
-		if user_id == PreparedList.List[i] {
-			PreparedList.List[i] = PreparedList.List[len(PreparedList.List)-1] // Copy last element to index i.
-			PreparedList.List[len(PreparedList.List)-1] = 0                    // Erase last element (write zero value).
-			PreparedList.List = PreparedList.List[:len(PreparedList.List)-1]
-		}
-	}
-	PreparedList.Mux.Unlock()
+	conn.Close()
 }

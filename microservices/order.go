@@ -15,6 +15,8 @@ import (
 
 const CONN_PORT = "3334"
 
+var list micro.List
+
 type Order struct {
 	User_id int `json:"user_id"`
 	Amount  int `json:"amount"`
@@ -39,7 +41,7 @@ func handlePrepare(conn net.Conn, password string) micro.Prep {
 
 	fmt.Println(user_id, amount)
 
-	db, err := sql.Open("mysql", "dilawarm:"+password+"@tcp(localhost:3306)/order_service")
+	db, err := sql.Open("mysql", "haavasm:"+password+"@tcp(localhost:3306)/order_service")
 	if err != nil {
 		return micro.Prep{4, nil, user_id}
 	}
@@ -57,22 +59,19 @@ func handlePrepare(conn net.Conn, password string) micro.Prep {
 	}
 	fmt.Println(res.RowsAffected())
 
-	micro.PreparedList.Mux.Lock()
-	for _, n := range micro.PreparedList.List {
-		if user_id == n {
-			micro.PreparedList.Mux.Unlock()
-			return micro.Prep{11, nil, 0}
-		}
+	list.Mux.Lock()
+	if list.List[user_id] {
+		fmt.Println("user_id already in list of prepared transactions")
+		list.Mux.Unlock()
+		return micro.Prep{11, nil, user_id}
 	}
-	micro.PreparedList.List = append(micro.PreparedList.List, user_id)
-
-	micro.PreparedList.Mux.Unlock()
-
+	list.List[user_id] = true
+	list.Mux.Unlock()
 	return micro.Prep{1, tx, user_id}
 }
 
 func main() {
-	micro.PreparedList = micro.List{List: []int{}}
+	list = micro.List{List: make(map[int]bool)}
 	data, err := ioutil.ReadFile("../.config")
 	if err != nil {
 		fmt.Println("File reading error", err)
@@ -99,6 +98,7 @@ func main() {
 }
 
 func prepareAndCommit(conn net.Conn, password string) {
+	//defer return
 	prep := handlePrepare(conn, password) // skriver her til Coordinator
 	tx := prep.Tx
 	user_id := prep.User_id
@@ -106,6 +106,5 @@ func prepareAndCommit(conn net.Conn, password string) {
 	fmt.Println(prep.Id)
 	binary.LittleEndian.PutUint16(b, uint16(prep.Id))
 	conn.Write(b)
-	micro.HandleCommit(conn, tx, user_id)
-	conn.Close()
+	micro.HandleCommit(conn, tx, user_id, list)
 }

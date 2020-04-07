@@ -15,6 +15,8 @@ import (
 
 const CONN_PORT = "3333"
 
+var list micro.List
+
 type Wallet struct {
 	User_id int `json:"user_id"`
 	Balance int `json:"balance"`
@@ -48,7 +50,7 @@ func handlePrepare(conn net.Conn, password string) micro.Prep {
 		return micro.Prep{3, nil, user_id}
 	}
 
-	db, err := sql.Open("mysql", "dilawar:"+password+"@tcp(127.0.0.1:3306)/wallet_service")
+	db, err := sql.Open("mysql", "haavasm:"+password+"@tcp(127.0.0.1:3306)/wallet_service")
 	if err != nil {
 		//conn.Write([]byte(strconv.Itoa(4))) // 4 = Error connecting to database
 		return micro.Prep{4, nil, user_id}
@@ -82,19 +84,17 @@ func handlePrepare(conn net.Conn, password string) micro.Prep {
 		return micro.Prep{7, tx, user_id}
 	}
 
-	res, err := tx.Exec("UPDATE wallet SET balance=? WHERE user_id=?", wallet.Balance-price, user_id)
-	fmt.Println(res.RowsAffected())
+	_, err = tx.Exec("UPDATE wallet SET balance=? WHERE user_id=?", wallet.Balance-price, user_id)
+	//fmt.Println(res.RowsAffected())
 
-	micro.PreparedList.Mux.Lock()
-	for _, n := range micro.PreparedList.List {
-		if user_id == n {
-			fmt.Println("user_id already in list of prepared transactions")
-			micro.PreparedList.Mux.Unlock()
-			return micro.Prep{11, nil, user_id}
-		}
+	list.Mux.Lock()
+	if list.List[user_id] {
+		fmt.Println("user_id already in list of prepared transactions")
+		list.Mux.Unlock()
+		return micro.Prep{11, nil, user_id}
 	}
-	micro.PreparedList.List = append(micro.PreparedList.List, user_id)
-	micro.PreparedList.Mux.Unlock()
+	list.List[user_id] = true
+	list.Mux.Unlock()
 
 	if wallet.Balance-price >= 0 {
 		if err != nil {
@@ -110,7 +110,7 @@ func handlePrepare(conn net.Conn, password string) micro.Prep {
 }
 
 func main() {
-	micro.PreparedList = micro.List{List: []int{}}
+	list = micro.List{List: make(map[int]bool)}
 	data, err := ioutil.ReadFile("../.config")
 	if err != nil {
 		fmt.Println("File reading error", err)
@@ -127,6 +127,8 @@ func main() {
 	defer l.Close()
 	fmt.Println("Listening on " + micro.CONN_HOST + ":" + CONN_PORT)
 	for {
+		fmt.Println("started new connection")
+
 		conn, err := l.Accept()
 
 		if err != nil {
@@ -145,6 +147,6 @@ func prepareAndCommit(conn net.Conn, password string) {
 	fmt.Println(prep.Id)
 	binary.LittleEndian.PutUint16(b, uint16(prep.Id))
 	conn.Write(b)
-	micro.HandleCommit(conn, tx, user_id)
-	conn.Close()
+	micro.HandleCommit(conn, tx, user_id, list)
+	//micro.Remove(list, user_id)
 }
