@@ -33,10 +33,9 @@ fn handle_request(mut _client_stream: &TcpStream) -> bool {
     // TCP connection duration before timeout
     let timeout = Duration::from_millis(5000);
 
-    // Wallet micro service preperation
-    let account = 1u32;
-    let amount = 100i32;
+    // Establish connection to micro services
     let wallet_socket = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(WALLET_MS_IP[0], WALLET_MS_IP[1], WALLET_MS_IP[2], WALLET_MS_IP[3])), WALLET_MS_PORT);
+    let order_socket = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(ORDER_MS_IP[0], ORDER_MS_IP[1], ORDER_MS_IP[2], ORDER_MS_IP[3])), ORDER_MS_PORT);
     let mut wallet_stream = match TcpStream::connect_timeout(&wallet_socket, timeout) {
         Ok(stream) => stream,
         Err(e) => {
@@ -44,6 +43,17 @@ fn handle_request(mut _client_stream: &TcpStream) -> bool {
             return false;
         }
     };
+    let mut order_stream = match TcpStream::connect_timeout(&order_socket, timeout) {
+        Ok(stream) => stream,
+        Err(e) => {
+            println!("Failed to create connection to order micro service: {}", e);
+            return false;
+        }
+    };
+
+    // Wallet micro service preperation
+    let account = 1u32;
+    let amount = 100i32;
     match wallet_stream.write(&account.to_be_bytes()){
         Ok(_result) => {},
         Err(e) => {
@@ -64,14 +74,6 @@ fn handle_request(mut _client_stream: &TcpStream) -> bool {
     let amount_of_items = 5u32;
     let items = [1u32, 2u32, 3u32, 4u32, 5u32];
 
-    let order_socket = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(ORDER_MS_IP[0], ORDER_MS_IP[1], ORDER_MS_IP[2], ORDER_MS_IP[3])), ORDER_MS_PORT);
-    let mut order_stream = match TcpStream::connect_timeout(&order_socket, timeout) {
-        Ok(stream) => stream,
-        Err(e) => {
-            println!("Failed to create connection to order micro service: {}", e);
-            return false;
-        }
-    };
     match order_stream.write(&user_id.to_be_bytes()){
         Ok(_result) => {},
         Err(e) => {
