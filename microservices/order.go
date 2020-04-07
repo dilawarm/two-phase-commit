@@ -21,7 +21,7 @@ type Order struct {
 }
 
 func handlePrepare(conn net.Conn, password string) micro.Prep {
-	p := make([]byte, 28)
+	p := make([]byte, 16)
 	_, err := conn.Read(p)
 
 	if err != nil {
@@ -39,18 +39,7 @@ func handlePrepare(conn net.Conn, password string) micro.Prep {
 
 	fmt.Println(user_id, amount)
 
-	micro.PreparedList.Mux.Lock()
-	for _, n := range micro.PreparedList.List {
-		if user_id == n {
-			micro.PreparedList.Mux.Unlock()
-			return micro.Prep{11, nil, 0}
-		}
-	}
-	micro.PreparedList.List = append(micro.PreparedList.List, user_id)
-
-	micro.PreparedList.Mux.Unlock()
-
-	db, err := sql.Open("mysql", "dilawar:"+password+"@tcp(localhost:3306)/order_service")
+	db, err := sql.Open("mysql", "dilawarm:"+password+"@tcp(localhost:3306)/order_service")
 	if err != nil {
 		return micro.Prep{4, nil, user_id}
 	}
@@ -67,6 +56,18 @@ func handlePrepare(conn net.Conn, password string) micro.Prep {
 		return micro.Prep{8, tx, user_id}
 	}
 	fmt.Println(res.RowsAffected())
+
+	micro.PreparedList.Mux.Lock()
+	for _, n := range micro.PreparedList.List {
+		if user_id == n {
+			micro.PreparedList.Mux.Unlock()
+			return micro.Prep{11, nil, 0}
+		}
+	}
+	micro.PreparedList.List = append(micro.PreparedList.List, user_id)
+
+	micro.PreparedList.Mux.Unlock()
+
 	return micro.Prep{1, tx, user_id}
 }
 
@@ -105,9 +106,6 @@ func prepareAndCommit(conn net.Conn, password string) {
 	fmt.Println(prep.Id)
 	binary.LittleEndian.PutUint16(b, uint16(prep.Id))
 	conn.Write(b)
-	if prep.Id != 1 {
-		return
-	}
 	micro.HandleCommit(conn, tx, user_id)
 	conn.Close()
 }

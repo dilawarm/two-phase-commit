@@ -21,7 +21,7 @@ type Wallet struct {
 }
 
 func handlePrepare(conn net.Conn, password string) micro.Prep {
-	buf := make([]byte, 8)
+	buf := make([]byte, 16)
 
 	_, err := conn.Read(buf)
 
@@ -47,17 +47,7 @@ func handlePrepare(conn net.Conn, password string) micro.Prep {
 		fmt.Println("Error reading:", err.Error())
 		return micro.Prep{3, nil, user_id}
 	}
-	micro.PreparedList.Mux.Lock()
-	for _, n := range micro.PreparedList.List {
-		if user_id == n {
-			fmt.Println("user_id already in list of prepared transactions")
-			micro.PreparedList.Mux.Unlock()
-			return micro.Prep{11, nil, user_id}
-		}
-	}
-	fmt.Println(micro.PreparedList.List)
-	micro.PreparedList.List = append(micro.PreparedList.List, user_id)
-	micro.PreparedList.Mux.Unlock()
+
 	db, err := sql.Open("mysql", "dilawar:"+password+"@tcp(127.0.0.1:3306)/wallet_service")
 	if err != nil {
 		//conn.Write([]byte(strconv.Itoa(4))) // 4 = Error connecting to database
@@ -94,6 +84,17 @@ func handlePrepare(conn net.Conn, password string) micro.Prep {
 
 	res, err := tx.Exec("UPDATE wallet SET balance=? WHERE user_id=?", wallet.Balance-price, user_id)
 	fmt.Println(res.RowsAffected())
+
+	micro.PreparedList.Mux.Lock()
+	for _, n := range micro.PreparedList.List {
+		if user_id == n {
+			fmt.Println("user_id already in list of prepared transactions")
+			micro.PreparedList.Mux.Unlock()
+			return micro.Prep{11, nil, user_id}
+		}
+	}
+	micro.PreparedList.List = append(micro.PreparedList.List, user_id)
+	micro.PreparedList.Mux.Unlock()
 
 	if wallet.Balance-price >= 0 {
 		if err != nil {
@@ -144,9 +145,6 @@ func prepareAndCommit(conn net.Conn, password string) {
 	fmt.Println(prep.Id)
 	binary.LittleEndian.PutUint16(b, uint16(prep.Id))
 	conn.Write(b)
-	if prep.Id != 1 {
-		return
-	}
 	micro.HandleCommit(conn, tx, user_id)
 	conn.Close()
 }
