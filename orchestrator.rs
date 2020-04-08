@@ -41,7 +41,7 @@ fn main() {
                     tries += 1;
                 }
             });
-            let ten_millis = time::Duration::from_millis(10);
+            let ten_millis = time::Duration::from_millis(20);
             let now = time::Instant::now();
 
             thread::sleep(ten_millis);
@@ -232,6 +232,29 @@ fn rollback(mut order_stream: TcpStream, mut wallet_stream: TcpStream) {
                 fails += 1;
             }
         };
+
+        if !wallet_rolledback {
+            match wallet_stream.write(&rollback_message.to_be_bytes()) {
+                Ok(_result) => { wallet_rolledback = true; }
+                Err(e) => {
+                    println!("Wallet microservice rollback write failed: {}", e);
+                    fails += 1;
+                }
+            };
+        }
+        if !order_rolledback {
+            match order_stream.write(&rollback_message.to_be_bytes()) {
+                Ok(_result) => { order_rolledback = true; }
+                Err(e) => {
+                    println!("Order microservice rollback write failed: {}", e);
+                    fails += 1;
+                }
+            };
+        }
+
+        if order_rolledback && wallet_rolledback {
+            return;
+        }
     }
     println!("NB: Rollback Failed!");
 }

@@ -89,6 +89,8 @@ func main() {
 	fmt.Println("Listening on " + micro.CONN_HOST + ":" + CONN_PORT)
 
 	for {
+		fmt.Println("started new connection")
+
 		conn, err := socket.Accept()
 		if err != nil {
 			fmt.Println("Error accepting: ", err.Error())
