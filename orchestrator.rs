@@ -211,7 +211,7 @@ fn rollback(mut order_stream: TcpStream, mut wallet_stream: TcpStream) {
         let rollback_message = 2u32;
         if !wallet_rolledback {
             match wallet_stream.write(&rollback_message.to_be_bytes()) {
-                Ok(_result) => {}
+                Ok(_result) => { wallet_rolledback = true; }
                 Err(e) => {
                     println!("Wallet microservice rollback write failed: {}", e);
                     fails += 1;
@@ -220,7 +220,7 @@ fn rollback(mut order_stream: TcpStream, mut wallet_stream: TcpStream) {
         }
         if !order_rolledback {
             match order_stream.write(&rollback_message.to_be_bytes()) {
-                Ok(_result) => {}
+                Ok(_result) => { order_rolledback = true; }
                 Err(e) => {
                     println!("Order microservice rollback write failed: {}", e);
                     fails += 1;
