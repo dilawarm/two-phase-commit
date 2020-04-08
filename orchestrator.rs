@@ -4,7 +4,6 @@ use std::io::prelude::*;
 use std::net::{IpAddr, Ipv4Addr, SocketAddr, TcpListener, TcpStream};
 use std::sync::{Arc, Condvar, Mutex};
 use std::time::Duration;
-use std::{time};
 
 const WALLET_MS_IP: [u8; 4] = [127u8, 0u8, 0u8, 1u8];
 const WALLET_MS_PORT: u16 = 3333u16;
@@ -145,8 +144,8 @@ fn handle_request() -> bool {
     */
 
     // Read response
-    let mut wallet_response = [0u8];
-    let mut order_response = [0u8];
+    let mut wallet_response = [0u8, 0u8];
+    let mut order_response = [0u8, 0u8];
 
     match wallet_stream.read(&mut wallet_response) {
         Ok(_result) => {}
@@ -168,8 +167,8 @@ fn handle_request() -> bool {
             failed = true;
         }
     };
-    println!("wallet response: {}", wallet_response[0]);
-    println!("order response: {}", order_response[0]);
+    println!("wallet response: {} {}", wallet_response[0], wallet_response[1]);
+    println!("order response: {} {}", order_response[0], order_response[1]);
 
     if failed {
         rollback(order_stream, wallet_stream);
@@ -206,11 +205,12 @@ fn handle_request() -> bool {
 fn rollback(mut order_stream: TcpStream, mut wallet_stream: TcpStream) {
     println!("Rolling back transactions");
     let mut fails = 0;
-    let mut order_rolledback = false;
-    let mut wallet_rolledback = false;
     while fails < 5 {
         let rollback_message = 2u32;
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 03f4ce82ef7cadb569ae956316e50cf24fbaaa75
         match wallet_stream.write(&rollback_message.to_be_bytes()) {
             Ok(_result) => {}
             Err(e) => {
@@ -225,6 +225,7 @@ fn rollback(mut order_stream: TcpStream, mut wallet_stream: TcpStream) {
                 fails += 1;
             }
         };
+<<<<<<< HEAD
         let ten_millis = time::Duration::from_millis(100);
         let now = time::Instant::now();
         thread::sleep(ten_millis);
@@ -253,6 +254,8 @@ fn rollback(mut order_stream: TcpStream, mut wallet_stream: TcpStream) {
             return;
         }
 >>>>>>> 161067f8f5f698148bd01d0dab5c6872cafa64c5
+=======
+>>>>>>> 03f4ce82ef7cadb569ae956316e50cf24fbaaa75
     }
     println!("NB: Rollback Failed!");
 }
