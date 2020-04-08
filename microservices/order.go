@@ -41,7 +41,7 @@ func handlePrepare(conn net.Conn, password string) micro.Prep {
 
 	fmt.Println(user_id, amount)
 
-	db, err := sql.Open("mysql", "dilawar:"+password+"@tcp(localhost:3306)/order_service")
+	db, err := sql.Open("mysql", "root:"+password+"@tcp(localhost:3307)/order_service")
 	if err != nil {
 		return micro.Prep{4, nil, user_id}
 	}
@@ -49,6 +49,7 @@ func handlePrepare(conn net.Conn, password string) micro.Prep {
 
 	tx, err := db.Begin()
 	if err != nil { //7 = could not start transaction
+		fmt.Println(err)
 		return micro.Prep{7, tx, user_id}
 	}
 
