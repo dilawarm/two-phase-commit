@@ -231,11 +231,6 @@ fn rollback(mut order_stream: TcpStream, mut wallet_stream: TcpStream) {
         if order_rolledback && wallet_rolledback {
             return;
         }
-        
-        let ten_millis = time::Duration::from_millis(10);
-        let now = time::Instant::now();
-        thread::sleep(ten_millis);
-        assert!(now.elapsed() >= ten_millis);
     }
     println!("NB: Rollback Failed!");
 }
