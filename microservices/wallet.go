@@ -50,7 +50,7 @@ func handlePrepare(conn net.Conn, password string) micro.Prep {
 		return micro.Prep{3, nil, user_id}
 	}
 
-	db, err := sql.Open("mysql", "haavasm:"+password+"@tcp(127.0.0.1:3306)/wallet_service")
+	db, err := sql.Open("mysql", password+"@tcp(127.0.0.1:3306)/wallet_service")
 	if err != nil {
 		//conn.Write([]byte(strconv.Itoa(4))) // 4 = Error connecting to database
 		return micro.Prep{4, nil, user_id}

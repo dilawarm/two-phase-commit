@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net"
 	"sync"
+	"time"
 )
 
 type Prep struct {
@@ -32,8 +33,6 @@ func HandleCommit(conn net.Conn, tx *sql.Tx, user_id int, list List) {
 		fmt.Println("Error reading:", err.Error())
 	}
 	list.Mux.Lock()
-	fmt.Println("LISTE: ", list.List)
-	fmt.Println("USER_ID: ", user_id)
 	list.List[user_id] = false
 	list.Mux.Unlock()
 
@@ -62,5 +61,6 @@ func HandleCommit(conn net.Conn, tx *sql.Tx, user_id int, list List) {
 		binary.LittleEndian.PutUint16(b, uint16(69))
 		conn.Write(b)
 	}
+	time.Sleep(200 * time.Millisecond)
 	conn.Close()
 }
