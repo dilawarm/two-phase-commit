@@ -41,7 +41,7 @@ func handlePrepare(conn net.Conn, password string) micro.Prep {
 
 	fmt.Println(user_id, amount)
 
-	db, err := sql.Open("mysql", "haavasm:"+password+"@tcp(localhost:3306)/order_service")
+	db, err := sql.Open("mysql", "dilawar:"+password+"@tcp(localhost:3306)/order_service")
 	if err != nil {
 		return micro.Prep{4, nil, user_id}
 	}
@@ -88,6 +88,8 @@ func main() {
 	fmt.Println("Listening on " + micro.CONN_HOST + ":" + CONN_PORT)
 
 	for {
+		fmt.Println("started new connection")
+
 		conn, err := socket.Accept()
 		if err != nil {
 			fmt.Println("Error accepting: ", err.Error())

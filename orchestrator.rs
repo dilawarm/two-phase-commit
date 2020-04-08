@@ -221,7 +221,7 @@ fn rollback(mut order_stream: TcpStream, mut wallet_stream: TcpStream) {
                 fails += 1;
             }
         };
-        let ten_millis = time::Duration::from_millis(10);
+        let ten_millis = time::Duration::from_millis(100);
         let now = time::Instant::now();
         thread::sleep(ten_millis);
         assert!(now.elapsed() >= ten_millis);
