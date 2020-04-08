@@ -32,8 +32,16 @@ fn main() {
         );
     }
     */
-    
-    let thread = thread::Builder::new()
+    let mut thread = thread::Builder::new()
+    .name("coordinator".to_string())
+    .spawn(move || {
+        let mut tries = 1;
+        while !handle_request() && tries < 5 {
+            tries += 1;
+        }
+    });
+    for i in 0..2{
+        thread = thread::Builder::new()
             .name("coordinator".to_string())
             .spawn(move || {
                 let mut tries = 1;
@@ -41,7 +49,7 @@ fn main() {
                     tries += 1;
                 }
             });
-    thread.unwrap().join();
+    }
 }
 
 fn handle_request() -> bool {
@@ -177,6 +185,7 @@ fn handle_request() -> bool {
     }
 
     if order_response[0] == 1 && wallet_response[0] == 1 {
+        println!("Commiting changes");
         let commit_message = 1u32;
         match wallet_stream.write(&commit_message.to_be_bytes()) {
             Ok(_result) => {}
