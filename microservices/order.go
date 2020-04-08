@@ -57,6 +57,7 @@ func handlePrepare(conn net.Conn, password string) micro.Prep {
 
 	tx, err := db.Begin()
 	if err != nil { //7 = could not start transaction
+		fmt.Println(err)
 		return micro.Prep{7, tx, user_id}
 	}
 
