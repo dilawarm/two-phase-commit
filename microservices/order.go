@@ -40,8 +40,16 @@ func handlePrepare(conn net.Conn, password string) micro.Prep {
 	amount := int(data)
 
 	fmt.Println(user_id, amount)
+	list.Mux.Lock()
+	if list.List[user_id] {
+		fmt.Println("user_id already in list of prepared transactions")
+		list.Mux.Unlock()
+		return micro.Prep{11, nil, user_id}
+	}
+	list.List[user_id] = true
+	list.Mux.Unlock()
 
-	db, err := sql.Open("mysql", password+"a@tcp(localhost:3306)/order_service")
+	db, err := sql.Open("mysql", password+"@tcp(localhost:3306)/order_service")
 	if err != nil {
 		return micro.Prep{4, nil, user_id}
 	}
@@ -59,14 +67,6 @@ func handlePrepare(conn net.Conn, password string) micro.Prep {
 	}
 	fmt.Println(res.RowsAffected())
 
-	list.Mux.Lock()
-	if list.List[user_id] {
-		fmt.Println("user_id already in list of prepared transactions")
-		list.Mux.Unlock()
-		return micro.Prep{11, nil, user_id}
-	}
-	list.List[user_id] = true
-	list.Mux.Unlock()
 	return micro.Prep{1, tx, user_id}
 }
 
@@ -106,5 +106,5 @@ func prepareAndCommit(conn net.Conn, password string) {
 	fmt.Println(prep.Id)
 	binary.LittleEndian.PutUint16(b, uint16(prep.Id))
 	conn.Write(b)
-	micro.HandleCommit(conn, tx, user_id, list)
+	micro.HandleCommit(conn, tx, user_id, list, prep.Id)
 }

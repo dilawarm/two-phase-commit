@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net"
 	"sync"
-	"time"
 )
 
 type Prep struct {
@@ -25,7 +24,7 @@ type List struct {
 const CONN_HOST = "localhost"
 const CONN_TYPE = "tcp"
 
-func HandleCommit(conn net.Conn, tx *sql.Tx, user_id int, list List) {
+func HandleCommit(conn net.Conn, tx *sql.Tx, user_id int, list List, prepMessage int) {
 
 	buf := make([]byte, 4)
 	_, err := conn.Read(buf)
@@ -33,7 +32,9 @@ func HandleCommit(conn net.Conn, tx *sql.Tx, user_id int, list List) {
 		fmt.Println("Error reading:", err.Error())
 	}
 	list.Mux.Lock()
-	list.List[user_id] = false
+	if prepMessage != 11 {
+		list.List[user_id] = false
+	}
 	list.Mux.Unlock()
 
 	data := binary.BigEndian.Uint32(buf[:4])
@@ -61,6 +62,6 @@ func HandleCommit(conn net.Conn, tx *sql.Tx, user_id int, list List) {
 		binary.LittleEndian.PutUint16(b, uint16(69))
 		conn.Write(b)
 	}
-	time.Sleep(200 * time.Millisecond)
+	//time.Sleep(200 * time.Millisecond)
 	conn.Close()
 }

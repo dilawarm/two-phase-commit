@@ -38,6 +38,15 @@ func handlePrepare(conn net.Conn, password string) micro.Prep {
 	price := int(data)
 	//fmt.Printf(user_id, price)
 	fmt.Println(user_id, price)
+
+	list.Mux.Lock()
+	if list.List[user_id] {
+		fmt.Println("user_id already in list of prepared transactions")
+		list.Mux.Unlock()
+		return micro.Prep{11, nil, user_id}
+	}
+	list.List[user_id] = true
+	list.Mux.Unlock()
 	/*message := string(buf[:2048])
 	temp := strings.Split(message, " ")
 	//user_id, _ := strconv.Atoi(temp[0])
@@ -86,15 +95,6 @@ func handlePrepare(conn net.Conn, password string) micro.Prep {
 
 	_, err = tx.Exec("UPDATE wallet SET balance=? WHERE user_id=?", wallet.Balance-price, user_id)
 	//fmt.Println(res.RowsAffected())
-
-	list.Mux.Lock()
-	if list.List[user_id] {
-		fmt.Println("user_id already in list of prepared transactions")
-		list.Mux.Unlock()
-		return micro.Prep{11, nil, user_id}
-	}
-	list.List[user_id] = true
-	list.Mux.Unlock()
 
 	if wallet.Balance-price >= 0 {
 		if err != nil {
@@ -147,6 +147,6 @@ func prepareAndCommit(conn net.Conn, password string) {
 	fmt.Println(prep.Id)
 	binary.LittleEndian.PutUint16(b, uint16(prep.Id))
 	conn.Write(b)
-	micro.HandleCommit(conn, tx, user_id, list)
+	micro.HandleCommit(conn, tx, user_id, list, prep.Id)
 	//micro.Remove(list, user_id)
 }
