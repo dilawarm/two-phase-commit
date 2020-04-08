@@ -23,19 +23,22 @@ type Wallet struct {
 }
 
 func handlePrepare(conn net.Conn, password string) micro.Prep {
-	buf := make([]byte, 16)
-
+	buf := make([]byte, 4)
 	_, err := conn.Read(buf)
-
+	data := binary.BigEndian.Uint32(buf[:4])
+	user_id := int(data)
 	if err != nil {
 		fmt.Println("Error reading:", err.Error())
 		return micro.Prep{10, nil, 0}
 	}
-
-	data := binary.BigEndian.Uint32(buf[:4])
-	user_id := int(data)
-	data = binary.BigEndian.Uint32(buf[4:])
+	_, err = conn.Read(buf)
+	data = binary.BigEndian.Uint32(buf[:4])
 	price := int(data)
+	if err != nil {
+		fmt.Println("Error reading:", err.Error())
+		return micro.Prep{10, nil, 0}
+	}
+	
 	//fmt.Printf(user_id, price)
 	fmt.Println(user_id, price)
 	/*message := string(buf[:2048])
@@ -50,9 +53,10 @@ func handlePrepare(conn net.Conn, password string) micro.Prep {
 		return micro.Prep{3, nil, user_id}
 	}
 
-	db, err := sql.Open("mysql", "haavasm:"+password+"@tcp(127.0.0.1:3306)/wallet_service")
+	db, err := sql.Open("mysql", "root:"+password+"@tcp(127.0.0.1:3307)/wallet_service")
 	if err != nil {
 		//conn.Write([]byte(strconv.Itoa(4))) // 4 = Error connecting to database
+		fmt.Println(err)
 		return micro.Prep{4, nil, user_id}
 	}
 
@@ -61,6 +65,7 @@ func handlePrepare(conn net.Conn, password string) micro.Prep {
 	results, err := db.Query("SELECT * FROM wallet WHERE user_id=?", user_id)
 	if err != nil {
 		//conn.Write([]byte(strconv.Itoa(5))) // Query went wrong
+		fmt.Println(err)
 		return micro.Prep{5, nil, user_id}
 	}
 
@@ -98,6 +103,7 @@ func handlePrepare(conn net.Conn, password string) micro.Prep {
 
 	if wallet.Balance-price >= 0 {
 		if err != nil {
+			fmt.Println(err);
 			tx.Rollback()
 			//conn.Write([]byte(strconv.Itoa(8))) // 8 = Could not lock row
 			return micro.Prep{8, tx, user_id}

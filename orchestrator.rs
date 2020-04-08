@@ -204,6 +204,7 @@ fn handle_request() -> bool {
 }
 
 fn rollback(mut order_stream: TcpStream, mut wallet_stream: TcpStream) {
+    println!("Rolling back transactions");
     let mut fails = 0;
     let mut order_rolledback = false;
     let mut wallet_rolledback = false;
