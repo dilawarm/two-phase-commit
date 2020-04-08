@@ -145,8 +145,8 @@ fn handle_request() -> bool {
     */
 
     // Read response
-    let mut wallet_response = [0u8, 0u8];
-    let mut order_response = [0u8, 0u8];
+    let mut wallet_response = [0u8];
+    let mut order_response = [0u8];
 
     match wallet_stream.read(&mut wallet_response) {
         Ok(_result) => {}
@@ -168,8 +168,8 @@ fn handle_request() -> bool {
             failed = true;
         }
     };
-    println!("wallet response: {} {}", wallet_response[0], wallet_response[1]);
-    println!("order response: {} {}", order_response[0], order_response[1]);
+    println!("wallet response: {}", wallet_response[0]);
+    println!("order response: {}", order_response[0]);
 
     if failed {
         rollback(order_stream, wallet_stream);
@@ -205,22 +205,33 @@ fn handle_request() -> bool {
 
 fn rollback(mut order_stream: TcpStream, mut wallet_stream: TcpStream) {
     let mut fails = 0;
+    let mut order_rolledback = false;
+    let mut wallet_rolledback = false;
     while fails < 5 {
         let rollback_message = 2u32;
-        match wallet_stream.write(&rollback_message.to_be_bytes()) {
-            Ok(_result) => {}
-            Err(e) => {
-                println!("Wallet microservice rollback write failed: {}", e);
-                fails += 1;
-            }
-        };
-        match order_stream.write(&rollback_message.to_be_bytes()) {
-            Ok(_result) => {}
-            Err(e) => {
-                println!("Order microservice rollback write failed: {}", e);
-                fails += 1;
-            }
-        };
+        if !wallet_rolledback {
+            match wallet_stream.write(&rollback_message.to_be_bytes()) {
+                Ok(_result) => {}
+                Err(e) => {
+                    println!("Wallet microservice rollback write failed: {}", e);
+                    fails += 1;
+                }
+            };
+        }
+        if !order_rolledback {
+            match order_stream.write(&rollback_message.to_be_bytes()) {
+                Ok(_result) => {}
+                Err(e) => {
+                    println!("Order microservice rollback write failed: {}", e);
+                    fails += 1;
+                }
+            };
+        }
+
+        if order_rolledback && wallet_rolledback {
+            return;
+        }
+        
         let ten_millis = time::Duration::from_millis(10);
         let now = time::Instant::now();
         thread::sleep(ten_millis);
