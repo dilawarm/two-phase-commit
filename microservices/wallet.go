@@ -38,9 +38,18 @@ func handlePrepare(conn net.Conn, password string) micro.Prep {
 		fmt.Println("Error reading:", err.Error())
 		return micro.Prep{10, nil, 0}
 	}
-	
+
 	//fmt.Printf(user_id, price)
 	fmt.Println(user_id, price)
+
+	list.Mux.Lock()
+	if list.List[user_id] {
+		fmt.Println("user_id already in list of prepared transactions")
+		list.Mux.Unlock()
+		return micro.Prep{11, nil, user_id}
+	}
+	list.List[user_id] = true
+	list.Mux.Unlock()
 	/*message := string(buf[:2048])
 	temp := strings.Split(message, " ")
 	//user_id, _ := strconv.Atoi(temp[0])
@@ -53,7 +62,7 @@ func handlePrepare(conn net.Conn, password string) micro.Prep {
 		return micro.Prep{3, nil, user_id}
 	}
 
-	db, err := sql.Open("mysql", "root:"+password+"@tcp(127.0.0.1:3307)/wallet_service")
+	db, err := sql.Open("mysql", password+"@tcp(127.0.0.1:3306)/wallet_service")
 	if err != nil {
 		//conn.Write([]byte(strconv.Itoa(4))) // 4 = Error connecting to database
 		fmt.Println(err)
@@ -92,18 +101,9 @@ func handlePrepare(conn net.Conn, password string) micro.Prep {
 	_, err = tx.Exec("UPDATE wallet SET balance=? WHERE user_id=?", wallet.Balance-price, user_id)
 	//fmt.Println(res.RowsAffected())
 
-	list.Mux.Lock()
-	if list.List[user_id] {
-		fmt.Println("user_id already in list of prepared transactions")
-		list.Mux.Unlock()
-		return micro.Prep{11, nil, user_id}
-	}
-	list.List[user_id] = true
-	list.Mux.Unlock()
-
 	if wallet.Balance-price >= 0 {
 		if err != nil {
-			fmt.Println(err);
+			fmt.Println(err)
 			tx.Rollback()
 			//conn.Write([]byte(strconv.Itoa(8))) // 8 = Could not lock row
 			return micro.Prep{8, tx, user_id}
@@ -153,6 +153,6 @@ func prepareAndCommit(conn net.Conn, password string) {
 	fmt.Println(prep.Id)
 	binary.LittleEndian.PutUint16(b, uint16(prep.Id))
 	conn.Write(b)
-	micro.HandleCommit(conn, tx, user_id, list)
+	micro.HandleCommit(conn, tx, user_id, list, prep.Id)
 	//micro.Remove(list, user_id)
 }

@@ -4,7 +4,7 @@ use std::io::prelude::*;
 use std::net::{IpAddr, Ipv4Addr, SocketAddr, TcpListener, TcpStream};
 use std::sync::{Arc, Condvar, Mutex};
 use std::time::Duration;
-use std::{time};
+use std::time;
 
 const WALLET_MS_IP: [u8; 4] = [127u8, 0u8, 0u8, 1u8];
 const WALLET_MS_PORT: u16 = 3333u16;
@@ -40,7 +40,7 @@ fn main() {
             tries += 1;
         }
     });
-    for i in 0..2{
+    /*for i in 0..2{
         thread = thread::Builder::new()
             .name("coordinator".to_string())
             .spawn(move || {
@@ -49,7 +49,8 @@ fn main() {
                     tries += 1;
                 }
             });
-    }
+    }*/
+    thread.unwrap().join();
 }
 
 fn handle_request() -> bool {
@@ -213,12 +214,28 @@ fn handle_request() -> bool {
 }
 
 fn rollback(mut order_stream: TcpStream, mut wallet_stream: TcpStream) {
-    println!("Rolling back transactions");
     let mut fails = 0;
+    println!("Rolling back transactions");
     let mut order_rolledback = false;
     let mut wallet_rolledback = false;
+
     while fails < 5 {
         let rollback_message = 2u32;
+        match wallet_stream.write(&rollback_message.to_be_bytes()) {
+            Ok(_result) => {}
+            Err(e) => {
+                println!("Wallet microservice rollback write failed: {}", e);
+                fails += 1;
+            }
+        };
+        match order_stream.write(&rollback_message.to_be_bytes()) {
+            Ok(_result) => {}
+            Err(e) => {
+                println!("Order microservice rollback write failed: {}", e);
+                fails += 1;
+            }
+        };
+
         if !wallet_rolledback {
             match wallet_stream.write(&rollback_message.to_be_bytes()) {
                 Ok(_result) => { wallet_rolledback = true; }
