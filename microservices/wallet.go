@@ -29,14 +29,14 @@ func handlePrepare(conn net.Conn, password string) micro.Prep {
 	user_id := int(data)
 	if err != nil {
 		fmt.Println("Error reading:", err.Error())
-		return micro.Prep{10, nil, 0}
+		return micro.Prep{0, nil, 0} // Error reading data
 	}
 	_, err = conn.Read(buf)
 	data = binary.BigEndian.Uint32(buf[:4])
 	price := int(data)
 	if err != nil {
 		fmt.Println("Error reading:", err.Error())
-		return micro.Prep{10, nil, 0}
+		return micro.Prep{0, nil, 0} // Error reading data
 	}
 
 	//fmt.Printf(user_id, price)
@@ -46,7 +46,7 @@ func handlePrepare(conn net.Conn, password string) micro.Prep {
 	if list.List[user_id] {
 		fmt.Println("user_id already in list of prepared transactions")
 		list.Mux.Unlock()
-		return micro.Prep{11, nil, user_id}
+		return micro.Prep{3, nil, user_id}
 	}
 	list.List[user_id] = true
 	list.Mux.Unlock()
@@ -75,7 +75,7 @@ func handlePrepare(conn net.Conn, password string) micro.Prep {
 	if err != nil {
 		//conn.Write([]byte(strconv.Itoa(5))) // Query went wrong
 		fmt.Println(err)
-		return micro.Prep{5, nil, user_id}
+		return micro.Prep{9, nil, user_id}
 	}
 
 	var wallet Wallet
@@ -84,18 +84,18 @@ func handlePrepare(conn net.Conn, password string) micro.Prep {
 		err = results.Scan(&wallet.User_id, &wallet.Balance)
 		if err != nil {
 			//conn.Write([]byte(strconv.Itoa(6))) // 6 = Wrong format on wallet object
-			return micro.Prep{6, nil, user_id}
+			return micro.Prep{10, nil, user_id} //
 		}
 	}
 	fmt.Println("Wallet :", wallet)
 	if wallet.User_id == 0 { // No user
-		return micro.Prep{12, nil, user_id}
+		return micro.Prep{11, nil, user_id}
 	}
 
 	tx, err := db.Begin()
 	if err != nil {
 		//conn.Write([]byte(strconv.Itoa(7))) // Could not start transaction
-		return micro.Prep{7, tx, user_id}
+		return micro.Prep{5, tx, user_id}
 	}
 
 	_, err = tx.Exec("UPDATE wallet SET balance=? WHERE user_id=?", wallet.Balance-price, user_id)
@@ -106,12 +106,12 @@ func handlePrepare(conn net.Conn, password string) micro.Prep {
 			fmt.Println(err)
 			tx.Rollback()
 			//conn.Write([]byte(strconv.Itoa(8))) // 8 = Could not lock row
-			return micro.Prep{8, tx, user_id}
+			return micro.Prep{6, tx, user_id}
 		}
 		return micro.Prep{1, tx, user_id}
 	} else {
 		tx.Rollback()
-		return micro.Prep{9, tx, user_id} // 9 = Balance too low.
+		return micro.Prep{12, tx, user_id} // 9 = Balance too low.
 	}
 }
 

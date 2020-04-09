@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"net"
 	"os"
-	"strconv"
 
 	"../micro"
 	_ "github.com/go-sql-driver/mysql"
@@ -28,9 +27,7 @@ func handlePrepare(conn net.Conn, password string) micro.Prep {
 
 	if err != nil {
 		fmt.Println("Error reading:", err.Error())
-		conn.Write([]byte(strconv.Itoa(3))) // 3 = Error reading
-		conn.Close()
-		return micro.Prep{3, nil, 0}
+		return micro.Prep{0, nil, 0}
 	}
 
 	data := binary.BigEndian.Uint32(p[:4])
@@ -44,7 +41,7 @@ func handlePrepare(conn net.Conn, password string) micro.Prep {
 	if list.List[user_id] {
 		fmt.Println("user_id already in list of prepared transactions")
 		list.Mux.Unlock()
-		return micro.Prep{11, nil, user_id}
+		return micro.Prep{3, nil, user_id}
 	}
 	list.List[user_id] = true
 	list.Mux.Unlock()
@@ -58,15 +55,14 @@ func handlePrepare(conn net.Conn, password string) micro.Prep {
 	tx, err := db.Begin()
 	if err != nil { //7 = could not start transaction
 		fmt.Println(err)
-		return micro.Prep{7, tx, user_id}
+		return micro.Prep{5, tx, user_id}
 	}
 
-	res, err := tx.Exec("INSERT INTO `order` (order_id, user_id, amount) VALUES (DEFAULT, ?, ?)", user_id, amount)
+	_, err = tx.Exec("INSERT INTO `order` (order_id, user_id, amount) VALUES (DEFAULT, ?, ?)", user_id, amount)
 	if err != nil {
 		tx.Rollback() // 8 = Could not lock row
-		return micro.Prep{8, tx, user_id}
+		return micro.Prep{6, tx, user_id}
 	}
-	fmt.Println(res.RowsAffected())
 
 	return micro.Prep{1, tx, user_id}
 }
