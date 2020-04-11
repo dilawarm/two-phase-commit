@@ -32,14 +32,31 @@ fn main() {
         );
     }
     */
-    let mut thread = thread::Builder::new()
-    .name("coordinator".to_string())
-    .spawn(move || {
-        let mut tries = 1;
-        while !handle_request() && tries < 5 {
-            tries += 1;
-        }
-    });
+    for i in 0..100{
+        let mut thread = thread::Builder::new()
+        .name("coordinator".to_string())
+        .spawn(move || {
+            let mut tries = 1;
+            while !handle_request() && tries < 5 {
+                tries += 1;
+                let ten_millis = time::Duration::from_millis(500);
+                let now = time::Instant::now();
+            
+                thread::sleep(ten_millis);
+            }
+            println!("tries: {}", tries)
+        });
+        let ten_millis = time::Duration::from_millis(10);
+        let now = time::Instant::now();
+    
+        thread::sleep(ten_millis);
+    }
+    let ten_millis = time::Duration::from_millis(2000);
+    let now = time::Instant::now();
+
+    thread::sleep(ten_millis);
+
+    assert!(now.elapsed() >= ten_millis);
     /*for i in 0..2{
         thread = thread::Builder::new()
             .name("coordinator".to_string())
@@ -50,7 +67,7 @@ fn main() {
                 }
             });
     }*/
-    thread.unwrap().join();
+    //thread.unwrap().join();
 }
 
 fn handle_request() -> bool {
