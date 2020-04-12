@@ -76,7 +76,7 @@ func main() {
 	}
 	password := string(data)
 
-	socket, err := net.Listen(micro.CONN_TYPE, micro.CONN_HOST+":"+CONN_PORT)
+	socket, err := net.Listen(micro.CONN_TYPE, micro.ORDER_HOST+":"+CONN_PORT)
 	if err != nil {
 		fmt.Println("Error listening: ", err.Error())
 		os.Exit(1)
