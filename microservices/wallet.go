@@ -61,7 +61,7 @@ func handlePrepare(conn net.Conn, password string) micro.Prep {
 		fmt.Println("Error reading:", err.Error())
 		return micro.Prep{3, nil, user_id}
 	}
-
+	fmt.Println(password)
 	db, err := sql.Open("mysql", password+"@tcp("+micro.WALLET_HOST+":3306)/wallet_service")
 	if err != nil {
 		//conn.Write([]byte(strconv.Itoa(4))) // 4 = Error connecting to database
