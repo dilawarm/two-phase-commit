@@ -186,13 +186,19 @@ fn handle_request() -> bool {
         }
     };
     let response_definitions = ["Error reading data from orchestrator", "OK Prepare", "OK Commit", "User has uncommited transactions", "Could not connect to database", "Could not start transaction", "Error with transaction query", "Transaction rolled back", "Transaction never started", "Error querying from wallet table", "Wrong format on result from wallet table", "User does not exist", "Balance too low"];
-    println!("wallet response: {}", wallet_response[0]);
+    print!("wallet response: {}", wallet_response[0]);
     if wallet_response[0] < 14 {
-        print!(" ({})", response_definitions[wallet_response[0] as usize]);
+        println!(" ({})", response_definitions[wallet_response[0] as usize]);
     }
-    println!("order response: {}", order_response[0]);
+    else {
+        println!();
+    }
+    print!("order response: {}", order_response[0]);
     if order_response[0] < 9 {
         print!(" ({})", response_definitions[order_response[0] as usize]);
+    }
+    else {
+        println!();
     }
 
     if failed {
