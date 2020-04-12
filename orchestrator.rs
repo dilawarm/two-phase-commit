@@ -6,9 +6,9 @@ use std::sync::{Arc, Condvar, Mutex};
 use std::time::Duration;
 use std::time;
 
-const WALLET_MS_IP: [u8; 4] = [127u8, 0u8, 0u8, 1u8];
+const WALLET_MS_IP: [u8; 4] = [35u8, 202u8, 15u8, 128u8]; //35.202.15.128
 const WALLET_MS_PORT: u16 = 3333u16;
-const ORDER_MS_IP: [u8; 4] = [127u8, 0u8, 0u8, 1u8];
+const ORDER_MS_IP: [u8; 4] = [34u8, 67u8, 42u8, 245u8]; //34.67.42.245
 const ORDER_MS_PORT: u16 = 3334u16;
 
 fn main() {
@@ -94,17 +94,18 @@ fn handle_request() -> bool {
         )),
         ORDER_MS_PORT,
     );
-    let mut wallet_stream = match TcpStream::connect_timeout(&wallet_socket, timeout) {
-        Ok(stream) => stream,
-        Err(e) => {
-            println!("Failed to create connection to wallet micro service: {}", e);
-            return false;
-        }
-    };
     let mut order_stream = match TcpStream::connect_timeout(&order_socket, timeout) {
         Ok(stream) => stream,
         Err(e) => {
             println!("Failed to create connection to order micro service: {}", e);
+            return false;
+        }
+    };
+
+    let mut wallet_stream = match TcpStream::connect_timeout(&wallet_socket, timeout) {
+        Ok(stream) => stream,
+        Err(e) => {
+            println!("Failed to create connection to wallet micro service: {}", e);
             return false;
         }
     };
