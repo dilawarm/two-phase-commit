@@ -1,0 +1,25 @@
+image: node:latest
+
+stages:
+  - deploy # Jobs placed in build-stage will run last after test-jobs
+
+
+
+
+deploy:
+  stage: deploy
+  script:
+    - mkdir ~/.ssh
+    - echo "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+    - touch ~/.ssh/id_rsa
+    - chmod 600 ~/.ssh/id_rsa # Required permission by ssh
+    - echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+    - touch ~/.ssh/id_rsa.pub
+    - chmod 600 ~/.ssh/id_rsa.pub # Required permission by ssh
+    - echo "$SSH_PUBLIC_KEY" > ~/.ssh/id_rsa.pub
+    - apt-get update
+    - apt-get install --assume-yes rsync
+    - rsync --archive --delete --exclude='.git' --exclude='.config' . order@34.67.42.245:order
+    - ssh order@34.67.42.245 systemctl --user restart order
+  only:
+    - master
