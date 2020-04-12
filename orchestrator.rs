@@ -77,17 +77,18 @@ fn handle_request() -> bool {
         )),
         ORDER_MS_PORT,
     );
-    let mut wallet_stream = match TcpStream::connect_timeout(&wallet_socket, timeout) {
-        Ok(stream) => stream,
-        Err(e) => {
-            println!("Failed to create connection to wallet micro service: {}", e);
-            return false;
-        }
-    };
     let mut order_stream = match TcpStream::connect_timeout(&order_socket, timeout) {
         Ok(stream) => stream,
         Err(e) => {
             println!("Failed to create connection to order micro service: {}", e);
+            return false;
+        }
+    };
+
+    let mut wallet_stream = match TcpStream::connect_timeout(&wallet_socket, timeout) {
+        Ok(stream) => stream,
+        Err(e) => {
+            println!("Failed to create connection to wallet micro service: {}", e);
             return false;
         }
     };
