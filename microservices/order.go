@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net"
 	"os"
+	"strings"
 
 	"../micro"
 	_ "github.com/go-sql-driver/mysql"
@@ -47,7 +48,7 @@ func handlePrepare(conn net.Conn, password string) micro.Prep {
 	}
 	list.List[user_id] = true
 	list.Mux.Unlock()
-	db, err := sql.Open("mysql" /*password+*/, "dilawar:passord123@tcp(localhost:3306)/order_service")
+	db, err := sql.Open("mysql", password+"@tcp(localhost:3306)/order_service")
 	if err != nil {
 		return micro.Prep{4, nil, user_id}
 	}
@@ -75,7 +76,7 @@ func main() {
 		fmt.Println("File reading error", err)
 		os.Exit(1)
 	}
-	password := string(data)
+	password := strings.TrimSpace(string(data))
 
 	socket, err := net.Listen(micro.CONN_TYPE, micro.ORDER_HOST+":"+CONN_PORT)
 	if err != nil {
