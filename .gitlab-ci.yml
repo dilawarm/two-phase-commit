@@ -1,7 +1,7 @@
 image: node:latest
 
 stages:
-  - deploy # Jobs placed in build-stage will run last after test-jobs
+  - deploy # Jobs placed in build-stage will run last after test-jobss
 
 
 
