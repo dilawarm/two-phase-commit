@@ -19,7 +19,7 @@ type List struct {
 	Mux  sync.Mutex
 }
 
-//var PreparedList List
+//var PreparedList List l
 
 const CONN_HOST = "localhost"
 const CONN_TYPE = "tcp"
