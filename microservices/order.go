@@ -22,19 +22,21 @@ type Order struct {
 }
 
 func handlePrepare(conn net.Conn, password string) micro.Prep {
-	p := make([]byte, 16)
-	_, err := conn.Read(p)
-
+	buf := make([]byte, 4)
+	_, err := conn.Read(buf)
+	data := binary.BigEndian.Uint32(buf[:4])
+	user_id := int(data)
 	if err != nil {
 		fmt.Println("Error reading:", err.Error())
-		return micro.Prep{0, nil, 0}
+		return micro.Prep{0, nil, 0} // Error reading data
 	}
-
-	data := binary.BigEndian.Uint32(p[:4])
-	user_id := int(data)
-
-	data = binary.BigEndian.Uint32(p[4:])
+	_, err = conn.Read(buf)
+	data = binary.BigEndian.Uint32(buf[:4])
 	amount := int(data)
+	if err != nil {
+		fmt.Println("Error reading:", err.Error())
+		return micro.Prep{0, nil, 0} // Error reading data
+	}
 
 	fmt.Println(user_id, amount)
 	list.Mux.Lock()
