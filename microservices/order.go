@@ -45,7 +45,7 @@ func handlePrepare(conn net.Conn, password string) micro.Prep {
 	}
 	list.List[user_id] = true
 	list.Mux.Unlock()
-	fmt.Println(password[:len(password)-1])
+	fmt.Println(password[len(password)-1])
 	db, err := sql.Open("mysql", password+"@tcp(localhost:3306)/order_service")
 	if err != nil {
 		return micro.Prep{4, nil, user_id}
