@@ -21,5 +21,11 @@ deploy:
     - apt-get install --assume-yes rsync
     - rsync --archive --delete --exclude='.git' --exclude='.config' . order@34.67.42.245:order
     - ssh order@34.67.42.245 systemctl --user restart order
+    - exit 
+    - rsync --archive --delete --exclude='.git' --exclude='.config' . wallet@35.202.15.128:wallet
+    - ssh wallet@35.202.15.128 systemctl --user restart wallet
+    - exit 
+    - rsync --archive --delete --exclude='.git' --exclude='.config' . orc@35.223.240.171:orc
+    - ssh orc@35.223.240.171 systemctl --user restart orc
   only:
     - master
