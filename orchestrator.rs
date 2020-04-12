@@ -32,7 +32,7 @@ fn main() {
         );
     }
     */
-    for i in 0..100{
+    for i in 0..50{
         let mut thread = thread::Builder::new()
         .name("coordinator".to_string())
         .spawn(move || {
@@ -51,7 +51,7 @@ fn main() {
     
         thread::sleep(ten_millis);
     }
-    let ten_millis = time::Duration::from_millis(2000);
+    let ten_millis = time::Duration::from_millis(2500);
     let now = time::Instant::now();
 
     thread::sleep(ten_millis);

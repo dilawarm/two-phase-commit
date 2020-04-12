@@ -142,6 +142,7 @@ func main() {
 			os.Exit(1)
 		}
 		go prepareAndCommit(conn, password)
+		//time.Sleep(20 * time.Millisecond)
 	}
 }
 

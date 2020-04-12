@@ -46,7 +46,7 @@ func handlePrepare(conn net.Conn, password string) micro.Prep {
 	list.List[user_id] = true
 	list.Mux.Unlock()
 
-	db, err := sql.Open("mysql", password+"@tcp(localhost:3306)/order_service")
+	db, err := sql.Open("mysql", password+"@tcp(35.223.240.171:3306)/order_service")
 	if err != nil {
 		return micro.Prep{4, nil, user_id}
 	}
@@ -93,6 +93,7 @@ func main() {
 			os.Exit(1)
 		}
 		go prepareAndCommit(conn, password)
+		//time.Sleep(20 * time.Millisecond)
 	}
 }
 
