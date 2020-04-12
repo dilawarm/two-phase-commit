@@ -21,10 +21,10 @@ type List struct {
 
 //var PreparedList List l1
 
-const CONN_HOST = "localhost"
+const CONN_HOST = ""
 const CONN_TYPE = "tcp"
-const ORDER_HOST = "localhost"
-const WALLET_HOST = "localhost"
+const ORDER_HOST = "10.128.0.10"
+const WALLET_HOST = "10.128.0.9"
 
 func HandleCommit(conn net.Conn, tx *sql.Tx, user_id int, list List, prepMessage int) {
 
