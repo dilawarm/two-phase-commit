@@ -35,7 +35,7 @@ func handlePrepare(conn net.Conn, password string) micro.Prep {
 	amount := int(data)
 	if err != nil {
 		fmt.Println("Error reading:", err.Error())
-		return micro.Prep{0, nil, 0} // Error reading data
+		return micro.Prep{0, nil, 0} // Error reading datas
 	}
 
 	fmt.Println(user_id, amount)
