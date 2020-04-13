@@ -67,3 +67,4 @@ func HandleCommit(conn net.Conn, tx *sql.Tx, user_id int, list List, prepMessage
 	//time.Sleep(200 * time.Millisecond)
 	conn.Close()
 }
+
