@@ -19,10 +19,12 @@ type List struct {
 	Mux  sync.Mutex
 }
 
-//var PreparedList List
+//var PreparedList List l
 
-const CONN_HOST = "localhost"
+const CONN_HOST = ""
 const CONN_TYPE = "tcp"
+const ORDER_HOST = "10.128.0.10"
+const WALLET_HOST = "10.128.0.9"
 
 func HandleCommit(conn net.Conn, tx *sql.Tx, user_id int, list List, prepMessage int) {
 

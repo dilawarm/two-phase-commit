@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net"
 	"os"
+	"strings"
 
 	"../micro"
 
@@ -61,8 +62,8 @@ func handlePrepare(conn net.Conn, password string) micro.Prep {
 		fmt.Println("Error reading:", err.Error())
 		return micro.Prep{3, nil, user_id}
 	}
-
-	db, err := sql.Open("mysql", password+"@tcp(127.0.0.1:3306)/wallet_service")
+	fmt.Println(password)
+	db, err := sql.Open("mysql", password+"@tcp(localhost:3306)/wallet_service")
 	if err != nil {
 		//conn.Write([]byte(strconv.Itoa(4))) // 4 = Error connecting to database
 		fmt.Println(err)
@@ -122,9 +123,9 @@ func main() {
 		fmt.Println("File reading error", err)
 		os.Exit(1)
 	}
-	password := string(data)
+	password := strings.TrimSpace(string(data))
 
-	l, err := net.Listen(micro.CONN_TYPE, micro.CONN_HOST+":"+CONN_PORT)
+	l, err := net.Listen(micro.CONN_TYPE, micro.WALLET_HOST+":"+CONN_PORT)
 	if err != nil {
 		fmt.Println("Error listening:", err.Error())
 		os.Exit(1)
@@ -142,6 +143,7 @@ func main() {
 			os.Exit(1)
 		}
 		go prepareAndCommit(conn, password)
+		//time.Sleep(20 * time.Millisecond)
 	}
 }
 

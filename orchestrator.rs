@@ -6,9 +6,9 @@ use std::sync::{Arc, Condvar, Mutex};
 use std::time::Duration;
 use std::time;
 
-const WALLET_MS_IP: [u8; 4] = [127u8, 0u8, 0u8, 1u8];
+const WALLET_MS_IP: [u8; 4] = [10u8, 128u8, 0u8, 9u8]; //35.202.15.128
 const WALLET_MS_PORT: u16 = 3333u16;
-const ORDER_MS_IP: [u8; 4] = [127u8, 0u8, 0u8, 1u8];
+const ORDER_MS_IP: [u8; 4] = [10u8, 128u8, 0u8, 10u8]; //34.67.42.245
 const ORDER_MS_PORT: u16 = 3334u16;
 
 fn main() {
@@ -32,14 +32,21 @@ fn main() {
         );
     }
     */
-    let mut thread = thread::Builder::new()
-    .name("coordinator".to_string())
-    .spawn(move || {
-        let mut tries = 1;
-        while !handle_request() && tries < 5 {
-            tries += 1;
-        }
-    });
+    //for i in 0..50{
+        let mut thread = thread::Builder::new()
+        .name("coordinator".to_string())
+        .spawn(move || {
+            let mut tries = 1;
+            while !handle_request() && tries < 5 {
+                tries += 1;
+                let ten_millis = time::Duration::from_millis(500);
+                let now = time::Instant::now();
+            
+                thread::sleep(ten_millis);
+            }
+            println!("tries: {}", tries)
+        });
+   // }
     /*for i in 0..2{
         thread = thread::Builder::new()
             .name("coordinator".to_string())
@@ -77,17 +84,18 @@ fn handle_request() -> bool {
         )),
         ORDER_MS_PORT,
     );
-    let mut wallet_stream = match TcpStream::connect_timeout(&wallet_socket, timeout) {
-        Ok(stream) => stream,
-        Err(e) => {
-            println!("Failed to create connection to wallet micro service: {}", e);
-            return false;
-        }
-    };
     let mut order_stream = match TcpStream::connect_timeout(&order_socket, timeout) {
         Ok(stream) => stream,
         Err(e) => {
             println!("Failed to create connection to order micro service: {}", e);
+            return false;
+        }
+    };
+
+    let mut wallet_stream = match TcpStream::connect_timeout(&wallet_socket, timeout) {
+        Ok(stream) => stream,
+        Err(e) => {
+            println!("Failed to create connection to wallet micro service: {}", e);
             return false;
         }
     };
@@ -178,13 +186,19 @@ fn handle_request() -> bool {
         }
     };
     let response_definitions = ["Error reading data from orchestrator", "OK Prepare", "OK Commit", "User has uncommited transactions", "Could not connect to database", "Could not start transaction", "Error with transaction query", "Transaction rolled back", "Transaction never started", "Error querying from wallet table", "Wrong format on result from wallet table", "User does not exist", "Balance too low"];
-    println!("wallet response: {}", wallet_response[0]);
+    print!("wallet response: {}", wallet_response[0]);
     if wallet_response[0] < 14 {
-        print!(" ({})", response_definitions[wallet_response[0] as usize]);
+        println!(" ({})", response_definitions[wallet_response[0] as usize]);
     }
-    println!("order response: {}", order_response[0]);
+    else {
+        println!();
+    }
+    print!("order response: {}", order_response[0]);
     if order_response[0] < 9 {
         print!(" ({})", response_definitions[order_response[0] as usize]);
+    }
+    else {
+        println!();
     }
 
     if failed {

@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net"
 	"os"
+	"strings"
 
 	"../micro"
 	_ "github.com/go-sql-driver/mysql"
@@ -22,19 +23,21 @@ type Order struct {
 }
 
 func handlePrepare(conn net.Conn, password string) micro.Prep {
-	p := make([]byte, 16)
-	_, err := conn.Read(p)
-
+	buf := make([]byte, 4)
+	_, err := conn.Read(buf)
+	data := binary.BigEndian.Uint32(buf[:4])
+	user_id := int(data)
 	if err != nil {
 		fmt.Println("Error reading:", err.Error())
-		return micro.Prep{0, nil, 0}
+		return micro.Prep{0, nil, 0} // Error reading data
 	}
-
-	data := binary.BigEndian.Uint32(p[:4])
-	user_id := int(data)
-
-	data = binary.BigEndian.Uint32(p[4:])
+	_, err = conn.Read(buf)
+	data = binary.BigEndian.Uint32(buf[:4])
 	amount := int(data)
+	if err != nil {
+		fmt.Println("Error reading:", err.Error())
+		return micro.Prep{0, nil, 0} // Error reading datas
+	}
 
 	fmt.Println(user_id, amount)
 	list.Mux.Lock()
@@ -45,7 +48,6 @@ func handlePrepare(conn net.Conn, password string) micro.Prep {
 	}
 	list.List[user_id] = true
 	list.Mux.Unlock()
-
 	db, err := sql.Open("mysql", password+"@tcp(localhost:3306)/order_service")
 	if err != nil {
 		return micro.Prep{4, nil, user_id}
@@ -74,9 +76,9 @@ func main() {
 		fmt.Println("File reading error", err)
 		os.Exit(1)
 	}
-	password := string(data)
+	password := strings.TrimSpace(string(data))
 
-	socket, err := net.Listen(micro.CONN_TYPE, micro.CONN_HOST+":"+CONN_PORT)
+	socket, err := net.Listen(micro.CONN_TYPE, micro.ORDER_HOST+":"+CONN_PORT)
 	if err != nil {
 		fmt.Println("Error listening: ", err.Error())
 		os.Exit(1)
@@ -93,6 +95,7 @@ func main() {
 			os.Exit(1)
 		}
 		go prepareAndCommit(conn, password)
+		//time.Sleep(20 * time.Millisecond)
 	}
 }
 
