@@ -54,12 +54,12 @@ func HandleCommit(conn net.Conn, tx *sql.Tx, user_id int, list List, prepMessage
 		tx.Rollback()
 		fmt.Println("Transaction rolled back")
 		b := make([]byte, 2)
-		binary.LittleEndian.PutUint16(b, uint16(69))
+		binary.LittleEndian.PutUint16(b, uint16(7))
 		conn.Write(b)
 	} else {
 		fmt.Println("do nothing, transaction never started")
 		b := make([]byte, 2)
-		binary.LittleEndian.PutUint16(b, uint16(69))
+		binary.LittleEndian.PutUint16(b, uint16(8))
 		conn.Write(b)
 	}
 	//time.Sleep(200 * time.Millisecond)
