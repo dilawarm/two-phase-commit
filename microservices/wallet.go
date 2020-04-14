@@ -142,7 +142,7 @@ func main() {
 	}
 
 	defer l.Close()
-	fmt.Println("Listening on " + micro.CONN_HOST + ":" + CONN_PORT)
+	fmt.Println("Listening on " + host + ":" + CONN_PORT)
 	for {
 		fmt.Println("started new connection")
 

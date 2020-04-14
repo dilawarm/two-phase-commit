@@ -86,13 +86,13 @@ func main() {
 	}
 	host = strings.Split(string(data), " ")[2]
 	fmt.Println("HOST: ", host)
-	socket, err := net.Listen(micro.CONN_TYPE, micro.ORDER_HOST+":"+CONN_PORT)
+	socket, err := net.Listen(micro.CONN_TYPE, host+":"+CONN_PORT)
 	if err != nil {
 		fmt.Println("Error listening: ", err.Error())
 		os.Exit(1)
 	}
 	defer socket.Close()
-	fmt.Println("Listening on " + micro.CONN_HOST + ":" + CONN_PORT)
+	fmt.Println("Listening on " + host + ":" + CONN_PORT)
 
 	for {
 		fmt.Println("started new connection")
