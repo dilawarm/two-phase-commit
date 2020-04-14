@@ -23,8 +23,8 @@ type List struct {
 
 const CONN_HOST = ""
 const CONN_TYPE = "tcp"
-const ORDER_HOST = "10.128.0.10"
-const WALLET_HOST = "10.128.0.9"
+const ORDER_HOST = "localhost"  //"10.128.0.10"
+const WALLET_HOST = "localhost" //"10.128.0.9"
 
 func HandleCommit(conn net.Conn, tx *sql.Tx, user_id int, list List, prepMessage int) {
 
@@ -67,4 +67,3 @@ func HandleCommit(conn net.Conn, tx *sql.Tx, user_id int, list List, prepMessage
 	//time.Sleep(200 * time.Millisecond)
 	conn.Close()
 }
-
