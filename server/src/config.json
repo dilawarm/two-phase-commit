@@ -1,5 +1,5 @@
 {
-	"host": "localhost",
+	"host": "35.202.15.128",
 	"user": "dilawar",
 	"password": "passord123",
 	"database": "wallet_service"

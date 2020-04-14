@@ -4,7 +4,7 @@ let express = require("express");
 let mysql = require("mysql");
 let bodyParser: function = require("body-parser");
 let app = express();
-let server = app.listen(8080, () => console.log("Listening on port 8080"));
+let server = app.listen(8081, () => console.log("Listening on port 8081"));
 
 app.use(bodyParser.json()); // for å tolke JSON i body
 
@@ -30,10 +30,7 @@ let pool = mysql.createPool({
 
 let walletDao = new WalletDao(pool);
 
-app.get("/wallets", (req, res) => {
-	console.log("/wallets: Fikk GET-request fra klienten");
-    walletDao.getAll((status, data) => {
-        res.status(status);
-        res.json(data);
-    });
-});
+app.post("/purchase", (req, res) => {
+	console.log("Fikk post request fra klient.");
+	console.log(req.body);
+})
