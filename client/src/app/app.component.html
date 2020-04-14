@@ -1,0 +1,19 @@
+<h1>{{title}}</h1>
+<h1>Your user ID: </h1>
+<input type = "number" (change)="user_id = $event.target.value">
+<br>
+<br>
+<br>
+
+<h1>Select product</h1>
+<select [(ngModel)]="chosen">
+  <option *ngFor = 'let item of items; let i = index' value = '{{item}}'>{{item}}, Price: {{price[i]}}</option>
+</select>
+<br>
+<h1>Select amount</h1>
+<input type = "number" (change) = "total = $event.target.value">
+
+<button *ngIf= "!loading" type = "button" (click) = "send()">Order</button>
+
+<h2>Output from servers: </h2>
+<p *ngFor = 'let out of output.split("\n")'>{{out}}</p>
