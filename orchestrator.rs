@@ -5,13 +5,25 @@ use std::net::{IpAddr, Ipv4Addr, SocketAddr, TcpListener, TcpStream};
 use std::sync::{Arc, Condvar, Mutex};
 use std::time::Duration;
 use std::time;
+use std::fs;
 
-const WALLET_MS_IP: [u8; 4] = [10u8, 128u8, 0u8, 9u8]; //35.202.15.128
+//const WALLET_MS_IP: [u8; 4] = [10u8, 128u8, 0u8, 9u8]; //35.202.15.128
 const WALLET_MS_PORT: u16 = 3333u16;
-const ORDER_MS_IP: [u8; 4] = [10u8, 128u8, 0u8, 10u8]; //34.67.42.245
+//const ORDER_MS_IP: [u8; 4] = [10u8, 128u8, 0u8, 10u8]; //34.67.42.245
 const ORDER_MS_PORT: u16 = 3334u16;
 
 fn main() {
+    let contents = fs::read_to_string("./addresses")
+    .expect("Something went wrong reading the file");
+    println!("{}",contents);
+    let addresses:Vec<&str> = contents.split(" ").collect();
+    let walletnumbers:Vec<&str> = addresses[1].split(".").collect();
+    let ordernumbers:Vec<&str> = addresses[2].split(".").collect();
+    //println!("{}", numbers[0].as_bytes());
+    println!("{}", ordernumbers[0]);
+    let mut wallet_ip: [u8; 4] = [walletnumbers[0].parse::<u8>().unwrap(), walletnumbers[1].parse::<u8>().unwrap(), walletnumbers[2].parse::<u8>().unwrap(), walletnumbers[3].parse::<u8>().unwrap()];
+    let mut order_ip: [u8; 4] = [ordernumbers[0].parse::<u8>().unwrap(), ordernumbers[1].parse::<u8>().unwrap(), ordernumbers[2].parse::<u8>().unwrap(), ordernumbers[3].parse::<u8>().unwrap()];
+
     /*
     let mut threads = Vec::new();
     Arc::new((Mutex::new(String::new()), Condvar::new()));
@@ -37,7 +49,7 @@ fn main() {
         .name("coordinator".to_string())
         .spawn(move || {
             let mut tries = 1;
-            while !handle_request() && tries < 5 {
+            while !handle_request(wallet_ip, order_ip) && tries < 5 {
                 tries += 1;
                 let ten_millis = time::Duration::from_millis(500);
                 let now = time::Instant::now();
@@ -60,7 +72,7 @@ fn main() {
     thread.unwrap().join();
 }
 
-fn handle_request() -> bool {
+fn handle_request(wallet_ip: [u8; 4], order_ip: [u8; 4]) -> bool {
     let mut failed = false;
     // TCP connection duration before timeout
     let timeout = Duration::from_millis(5000);
@@ -68,19 +80,19 @@ fn handle_request() -> bool {
     // Establish connection to micro services
     let wallet_socket = SocketAddr::new(
         IpAddr::V4(Ipv4Addr::new(
-            WALLET_MS_IP[0],
-            WALLET_MS_IP[1],
-            WALLET_MS_IP[2],
-            WALLET_MS_IP[3],
+            wallet_ip[0],
+            wallet_ip[1],
+            wallet_ip[2],
+            wallet_ip[3],
         )),
         WALLET_MS_PORT,
     );
     let order_socket = SocketAddr::new(
         IpAddr::V4(Ipv4Addr::new(
-            ORDER_MS_IP[0],
-            ORDER_MS_IP[1],
-            ORDER_MS_IP[2],
-            ORDER_MS_IP[3],
+            order_ip[0],
+            order_ip[1],
+            order_ip[2],
+            order_ip[3],
         )),
         ORDER_MS_PORT,
     );

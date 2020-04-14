@@ -16,6 +16,7 @@ import (
 const CONN_PORT = "3334"
 
 var list micro.List
+var host = ""
 
 type Order struct {
 	User_id int `json:"user_id"`
@@ -78,6 +79,13 @@ func main() {
 	}
 	password := strings.TrimSpace(string(data))
 
+	data, err = ioutil.ReadFile("../addresses")
+	if err != nil {
+		fmt.Println("File reading error", err)
+		os.Exit(1)
+	}
+	host = strings.Split(string(data), " ")[2]
+	fmt.Println("HOST: ", host)
 	socket, err := net.Listen(micro.CONN_TYPE, micro.ORDER_HOST+":"+CONN_PORT)
 	if err != nil {
 		fmt.Println("Error listening: ", err.Error())

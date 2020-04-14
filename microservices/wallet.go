@@ -16,6 +16,8 @@ import (
 
 const CONN_PORT = "3333"
 
+var host = ""
+
 var list micro.List
 
 type Wallet struct {
@@ -125,7 +127,15 @@ func main() {
 	}
 	password := strings.TrimSpace(string(data))
 
-	l, err := net.Listen(micro.CONN_TYPE, micro.WALLET_HOST+":"+CONN_PORT)
+	data, err = ioutil.ReadFile("../addresses")
+	if err != nil {
+		fmt.Println("File reading error", err)
+		os.Exit(1)
+	}
+	host = strings.Split(string(data), " ")[1]
+	fmt.Println(host)
+
+	l, err := net.Listen(micro.CONN_TYPE, host+":"+CONN_PORT)
 	if err != nil {
 		fmt.Println("Error listening:", err.Error())
 		os.Exit(1)
