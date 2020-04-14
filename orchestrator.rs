@@ -29,9 +29,9 @@ fn main() {
     
     let mut threads = Vec::new();
     Arc::new((Mutex::new(String::new()), Condvar::new()));
-    let listener = TcpListener::bind("35.223.240.171:3000").unwrap();
+    let listener = TcpListener::bind("127.0.0.1:3000").unwrap();
     for stream in listener.incoming() {
-        let stream = stream.unwrap();
+        let mut stream = stream.unwrap();
         threads.push(
             thread::Builder::new()
                 .name("coordinator".to_string())
@@ -74,7 +74,7 @@ fn main() {
     */
 }
 
-fn handle_request(wallet_ip: &[u8; 4], order_ip: &[u8; 4], client_stream: &TcpStream) -> bool {
+fn handle_request(wallet_ip: &[u8; 4], order_ip: &[u8; 4], mut client_stream: &TcpStream) -> bool {
     let response = "HTTP/1.1 200 OK\n\n<html><body>Message Recieved</body></html>";
     client_stream.write_all(response.as_bytes()).unwrap();
     let mut failed = false;
