@@ -26,8 +26,8 @@ deploy:
     - rsync --archive --delete --exclude='.git' --exclude='.config' --exclude='node_modules' . wallet@35.202.15.128:two-phase-commit
     - ssh wallet@35.202.15.128 "echo $IP_ADDRESSES  > two-phase-commit/addresses"
     - ssh wallet@35.202.15.128 systemctl --user restart wallet
-    - ssh orc@35.223.240.171 "echo $IP_ADDRESSES  > two-phase-commit/addresses"
     - rsync --archive --delete --exclude='.git' --exclude='.config' --exclude='node_modules' . orc@35.223.240.171:two-phase-commit
+    - ssh orc@35.223.240.171 "echo $IP_ADDRESSES  > two-phase-commit/addresses"
     - ssh orc@35.223.240.171 systemctl --user restart orc
   only:
     - master
