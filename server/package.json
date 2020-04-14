@@ -2,7 +2,7 @@
   "name": "server",
   "version": "1.0.0",
   "scripts": {
-    "start": "nodemon --exec babel-node src/server.js",
+    "start": "babel-node src/server.js",
     "test": "jest --detectOpenHandles --forceExit"
   },
   "jest": {
