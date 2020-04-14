@@ -35,15 +35,13 @@ export class AppComponent {
     console.log(this.list[this.chosen]);
     console.log(this.list[this.chosen] * this.total);
     
-    return axios.post<{}, {}>('http://10.128.0.8:3000/', {
+    return axios.post<{}, {}>('http://10.128.0.8:8081/purchase', {
       "user_id": this.user_id,
       "price": this.list[this.chosen] * this.total,
       "amount": this.total
       
   }).then(res => {
-    console.log("sent");
-    this.loading = false;
-    //this.output = 
+    console.log(res);
   });
   }
   

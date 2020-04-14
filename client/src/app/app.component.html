@@ -13,7 +13,7 @@
 <h1>Select amount</h1>
 <input type = "number" (change) = "total = $event.target.value">
 
-<button *ngIf= "!loading" type = "button" (click) = "send()">Order</button>
-
+<button type="button" *ngIf= "!loading" type = "button" (click) = "send()">Order</button>
+s
 <h2>Output from servers: </h2>
 <p *ngFor = 'let out of output.split("\n")'>{{out}}</p>
