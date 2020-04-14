@@ -21,8 +21,8 @@ fn main() {
     let ordernumbers:Vec<&str> = addresses[2].split(".").collect();
     //println!("{}", numbers[0].as_bytes());
     println!("{}", ordernumbers[0]);
-    let mut wallet_ip: [u8; 4] = [walletnumbers[0].parse::<u8>().unwrap(), walletnumbers[1].parse::<u8>().unwrap(), walletnumbers[2].parse::<u8>().unwrap(), walletnumbers[3].parse::<u8>().unwrap()];
-    let mut order_ip: [u8; 4] = [ordernumbers[0].parse::<u8>().unwrap(), ordernumbers[1].parse::<u8>().unwrap(), ordernumbers[2].parse::<u8>().unwrap(), ordernumbers[3].parse::<u8>().unwrap()];
+    let wallet_ip: [u8; 4] = [walletnumbers[0].parse::<u8>().unwrap(), walletnumbers[1].parse::<u8>().unwrap(), walletnumbers[2].parse::<u8>().unwrap(), walletnumbers[3].parse::<u8>().unwrap()];
+    let order_ip: [u8; 4] = [ordernumbers[0].parse::<u8>().unwrap(), ordernumbers[1].parse::<u8>().unwrap(), ordernumbers[2].parse::<u8>().unwrap(), ordernumbers[3].parse::<u8>().unwrap()];
     println!("{:?}", wallet_ip);
     println!("{:?}", order_ip);
 
