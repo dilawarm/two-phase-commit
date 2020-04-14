@@ -17,6 +17,7 @@ fn main() {
     .expect("Something went wrong reading the file");
     println!("{}",contents);
     let addresses:Vec<&str> = contents.split(" ").collect();
+    let listen: &str = addresses[0];
     let walletnumbers:Vec<&str> = addresses[1].split(".").collect();
     let ordernumbers:Vec<&str> = addresses[2].split(".").collect();
     //println!("{}", numbers[0].as_bytes());
@@ -29,7 +30,7 @@ fn main() {
     
     let mut threads = Vec::new();
     Arc::new((Mutex::new(String::new()), Condvar::new()));
-    let listener = TcpListener::bind("127.0.0.1:3000").unwrap();
+    let listener = TcpListener::bind(listen.to_owned()+":3000").unwrap();
     for stream in listener.incoming() {
         let mut stream = stream.unwrap();
         threads.push(
