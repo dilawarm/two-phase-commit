@@ -26,27 +26,25 @@ fn main() {
     println!("{:?}", wallet_ip);
     println!("{:?}", order_ip);
 
-    /*
+    
     let mut threads = Vec::new();
     Arc::new((Mutex::new(String::new()), Condvar::new()));
     let listener = TcpListener::bind("127.0.0.1:3000").unwrap();
     for stream in listener.incoming() {
         let stream = stream.unwrap();
-        // TODO: Legg til kø
-        //let transaction_queue = HashMap::new();
         threads.push(
             thread::Builder::new()
                 .name("coordinator".to_string())
                 .spawn(move || {
                     let mut tries = 1;
-                    while !handle_request(&stream) && tries < 5 {
+                    while !handle_request(&wallet_ip, &order_ip, &stream) && tries < 5 {
                         tries += 1;
                     }
                 }),
         );
     }
-    */
-    //for i in 0..50{
+    
+    /* for i in 0..50{
         let mut thread = thread::Builder::new()
         .name("coordinator".to_string())
         .spawn(move || {
@@ -60,7 +58,7 @@ fn main() {
             }
             println!("tries: {}", tries)
         });
-   // }
+    } */
     /*for i in 0..2{
         thread = thread::Builder::new()
             .name("coordinator".to_string())
@@ -70,11 +68,13 @@ fn main() {
                     tries += 1;
                 }
             });
-    }*/
+    }
+
     thread.unwrap().join();
+    */
 }
 
-fn handle_request(wallet_ip: [u8; 4], order_ip: [u8; 4]) -> bool {
+fn handle_request(wallet_ip: &[u8; 4], order_ip: &[u8; 4], _client_stream: &TcpStream) -> bool {
     let mut failed = false;
     // TCP connection duration before timeout
     let timeout = Duration::from_millis(5000);
