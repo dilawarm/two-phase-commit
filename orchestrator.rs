@@ -29,7 +29,7 @@ fn main() {
     
     let mut threads = Vec::new();
     Arc::new((Mutex::new(String::new()), Condvar::new()));
-    let listener = TcpListener::bind("127.0.0.1:3000").unwrap();
+    let listener = TcpListener::bind("35.223.240.171:3000").unwrap();
     for stream in listener.incoming() {
         let stream = stream.unwrap();
         threads.push(
