@@ -74,7 +74,9 @@ fn main() {
     */
 }
 
-fn handle_request(wallet_ip: &[u8; 4], order_ip: &[u8; 4], _client_stream: &TcpStream) -> bool {
+fn handle_request(wallet_ip: &[u8; 4], order_ip: &[u8; 4], client_stream: &TcpStream) -> bool {
+    let response = "HTTP/1.1 200 OK\n\n<html><body>Message Recieved</body></html>";
+    client_stream.write_all(response.as_bytes()).unwrap();
     let mut failed = false;
     // TCP connection duration before timeout
     let timeout = Duration::from_millis(5000);
