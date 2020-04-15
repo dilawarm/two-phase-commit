@@ -14,11 +14,10 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 )
 
-const CONN_PORT = "3333"
-
-var host = ""
+const CONN_PORT = "3332"
 
 var list micro.List
+var host = ""
 
 type Wallet struct {
 	User_id int `json:"user_id"`
@@ -114,7 +113,7 @@ func handlePrepare(conn net.Conn, password string) micro.Prep {
 		return micro.Prep{1, tx, user_id}
 	} else {
 		tx.Rollback()
-		return micro.Prep{12, tx, user_id} // 9 = Balance too low.
+		return micro.Prep{12, tx, user_id} //  = Balance too low.
 	}
 }
 
@@ -126,14 +125,13 @@ func main() {
 		os.Exit(1)
 	}
 	password := strings.TrimSpace(string(data))
-
 	data, err = ioutil.ReadFile("../addresses")
 	if err != nil {
 		fmt.Println("File reading error", err)
 		os.Exit(1)
 	}
-	host = strings.Split(string(data), " ")[1]
-	fmt.Println(host)
+	host = strings.Split(string(data), " ")[2]
+	fmt.Println("HOST: ", host)
 
 	l, err := net.Listen(micro.CONN_TYPE, host+":"+CONN_PORT)
 	if err != nil {

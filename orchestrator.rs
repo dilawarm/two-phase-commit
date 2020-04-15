@@ -8,9 +8,9 @@ use std::time;
 use std::fs;
 
 //const WALLET_MS_IP: [u8; 4] = [10u8, 128u8, 0u8, 9u8]; //35.202.15.128
-const WALLET_MS_PORT: u16 = 3333u16;
+const WALLET_MS_PORT: u16 = 3332u16;
 //const ORDER_MS_IP: [u8; 4] = [10u8, 128u8, 0u8, 10u8]; //34.67.42.245
-const ORDER_MS_PORT: u16 = 3334u16;
+const ORDER_MS_PORT: u16 = 3335u16;
 
 fn main() {
     let contents = fs::read_to_string("./addresses")
@@ -30,9 +30,10 @@ fn main() {
     
     let mut threads = Vec::new();
     Arc::new((Mutex::new(String::new()), Condvar::new()));
-    let listener = TcpListener::bind(listen.to_owned()+":3000").unwrap();
+    let listener = TcpListener::bind(listen.to_owned()+":3003").unwrap();
     for stream in listener.incoming() {
         let mut stream = stream.unwrap();
+        {
         threads.push(
             thread::Builder::new()
                 .name("coordinator".to_string())
@@ -43,14 +44,15 @@ fn main() {
                     }
                 }),
         );
+        }
     }
     
-    /* for i in 0..50{
+    /*for i in 0..10{
         let mut thread = thread::Builder::new()
         .name("coordinator".to_string())
         .spawn(move || {
             let mut tries = 1;
-            while !handle_request(wallet_ip, order_ip) && tries < 5 {
+            while !handle_request(&wallet_ip, &order_ip) && tries < 5 {
                 tries += 1;
                 let ten_millis = time::Duration::from_millis(500);
                 let now = time::Instant::now();
@@ -141,7 +143,7 @@ fn handle_request(wallet_ip: &[u8; 4], order_ip: &[u8; 4], mut client_stream: &T
     // Order micro service preperation
     let user_id = 1u32;
     let amount_of_items = 5u32;
-    //let items = [1u32, 2u32, 3u32, 4u32, 5u32];
+    let items = [1u32, 2u32, 3u32, 4u32, 5u32];
 
     match order_stream.write(&user_id.to_be_bytes()) {
         Ok(_result) => {}
@@ -160,7 +162,8 @@ fn handle_request(wallet_ip: &[u8; 4], order_ip: &[u8; 4], mut client_stream: &T
             failed = true;
         }
     };
-   /* for i in 0..amount_of_items {
+    
+   for i in 0..amount_of_items {
         match order_stream.write(&items[i as usize].to_be_bytes()) {
             Ok(_result) => {}
             Err(e) => {
@@ -169,7 +172,7 @@ fn handle_request(wallet_ip: &[u8; 4], order_ip: &[u8; 4], mut client_stream: &T
             }
         };
     }
-    match order_stream.write(&[space]) {
+    /*match order_stream.write(&[space]) {
         Ok(_result) => {}
         Err(e) => {
             println!("Failed to write space char to order micro service: {}", e);

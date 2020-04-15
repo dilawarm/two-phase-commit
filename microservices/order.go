@@ -13,7 +13,7 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 )
 
-const CONN_PORT = "3334"
+const CONN_PORT = "3335"
 
 var list micro.List
 var host = ""
@@ -40,6 +40,21 @@ func handlePrepare(conn net.Conn, password string) micro.Prep {
 		return micro.Prep{0, nil, 0} // Error reading datas
 	}
 
+	items := make(map[int]int)
+
+	for i := 0; i < amount; i++ {
+		_, err = conn.Read(buf)
+		if err != nil {
+			fmt.Println("Error reading:", err.Error())
+			return micro.Prep{0, nil, 0} // Error reading datas
+		}
+		data = binary.BigEndian.Uint32(buf[:4])
+		item := int(data)
+		items[item]++
+	}
+
+	fmt.Println(items)
+
 	fmt.Println(user_id, amount)
 	list.Mux.Lock()
 	if list.List[user_id] {
@@ -61,7 +76,31 @@ func handlePrepare(conn net.Conn, password string) micro.Prep {
 		return micro.Prep{5, tx, user_id}
 	}
 
+	for item, count := range items {
+		results, err := db.Query("SELECT amount FROM `items` WHERE item_id=?", item)
+		var total_from_db int
+		for results.Next() {
+			err = results.Scan(&total_from_db)
+			if err != nil {
+				//conn.Write([]byte(strconv.Itoa(6))) // 6 = Wrong format on wallet object
+				return micro.Prep{10, nil, user_id} //
+			}
+			fmt.Println(total_from_db)
+			if total_from_db < count {
+				return micro.Prep{12, nil, user_id}
+			}
+		}
+
+		_, err = tx.Exec("UPDATE `items` SET amount = amount - 1  WHERE item_id=?", item)
+		if err != nil {
+			tx.Rollback() // 8 = Could not lock row
+			return micro.Prep{6, tx, user_id}
+		}
+
+	}
+
 	_, err = tx.Exec("INSERT INTO `order` (order_id, user_id, amount) VALUES (DEFAULT, ?, ?)", user_id, amount)
+
 	if err != nil {
 		tx.Rollback() // 8 = Could not lock row
 		return micro.Prep{6, tx, user_id}
