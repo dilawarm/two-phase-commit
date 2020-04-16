@@ -130,7 +130,7 @@ func main() {
 		fmt.Println("File reading error", err)
 		os.Exit(1)
 	}
-	host = strings.Split(string(data), " ")[2]
+	host = strings.Split(string(data), " ")[1]
 	fmt.Println("HOST: ", host)
 
 	l, err := net.Listen(micro.CONN_TYPE, host+":"+CONN_PORT)
