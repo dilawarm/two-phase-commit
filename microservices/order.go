@@ -83,17 +83,17 @@ func handlePrepare(conn net.Conn, password string) micro.Prep {
 			err = results.Scan(&total_from_db)
 			if err != nil {
 				//conn.Write([]byte(strconv.Itoa(6))) // 6 = Wrong format on wallet object
-				return micro.Prep{10, nil, user_id} //
+				return micro.Prep{10, tx, user_id} //
 			}
 			fmt.Println(total_from_db)
 			if total_from_db < count {
-				return micro.Prep{12, nil, user_id}
+				return micro.Prep{12, tx, user_id}
 			}
 		}
 
 		_, err = tx.Exec("UPDATE `items` SET amount = amount - 1  WHERE item_id=?", item)
 		if err != nil {
-			tx.Rollback() // 8 = Could not lock row
+			//tx.Rollback() // 8 = Could not lock row
 			return micro.Prep{6, tx, user_id}
 		}
 
