@@ -1,11 +1,16 @@
 use std::thread;
 //use std::collections::HashMap;
 use std::io::prelude::*;
+use std::io::{BufRead, BufReader, Read, Write};
 use std::net::{IpAddr, Ipv4Addr, SocketAddr, TcpListener, TcpStream};
 use std::sync::{Arc, Condvar, Mutex};
 use std::time::Duration;
 use std::time;
 use std::fs;
+extern crate serde;
+extern crate serde_json;
+use serde::{Serialize, Deserialize};
+use serde_json::Result;
 
 //const WALLET_MS_IP: [u8; 4] = [10u8, 128u8, 0u8, 9u8]; //35.202.15.128
 const WALLET_MS_PORT: u16 = 3332u16;
@@ -30,7 +35,11 @@ fn main() {
     
     let mut threads = Vec::new();
     Arc::new((Mutex::new(String::new()), Condvar::new()));
+<<<<<<< HEAD
     let listener = TcpListener::bind(listen.to_owned()+":3005").unwrap();
+=======
+    let listener = TcpListener::bind(listen.to_owned()+":3000").unwrap();
+>>>>>>> a0960497fcf1cb679c0f42fa4a4881d68411bc99
     for stream in listener.incoming() {
         let mut stream = stream.unwrap();
         {
@@ -38,9 +47,26 @@ fn main() {
             thread::Builder::new()
                 .name("coordinator".to_string())
                 .spawn(move || {
-                    let mut tries = 1;
-                    while !handle_request(&wallet_ip, &order_ip, &stream) && tries < 5 {
-                        tries += 1;
+                    let (account, amount, user_id, amount_of_items) = read_http_request(&stream);
+                    let mut tries = 0;
+                    while tries < 5 {
+                        if handle_request(&wallet_ip, &order_ip, account, amount, user_id, amount_of_items, &stream) {
+                            break;
+                        }
+                        else {
+                            tries += 1;
+                            println!("Failed attempt #{}", tries);
+                        }
+                    }
+                    if tries >= 5 {
+                        let response = "HTTP/1.1 500 Could not fulfill order\n\n";
+                        stream.write_all(response.as_bytes()).unwrap();
+                        println!("Could not fulfilll order");
+                    }
+                    else {
+                        let response = "HTTP/1.1 200 OK\n\n<html><body>Message Recieved</body></html>";
+                        stream.write_all(response.as_bytes()).unwrap();
+                        println!("Order fulfilled");
                     }
                 }),
         );
@@ -77,9 +103,26 @@ fn main() {
     */
 }
 
-fn handle_request(wallet_ip: &[u8; 4], order_ip: &[u8; 4], mut client_stream: &TcpStream) -> bool {
+fn handle_request(wallet_ip: &[u8; 4], order_ip: &[u8; 4], account: u32, amount:u32, user_id: u32, amount_of_items: u32, mut client_stream: &TcpStream) -> bool {
+    /*
     let response = "HTTP/1.1 200 OK\n\n<html><body>Message Recieved</body></html>";
     client_stream.write_all(response.as_bytes()).unwrap();
+    */
+    /*
+    // Wallet micro service preperation
+    let account = 1u32;
+    let amount = 100u32;
+    // Order micro service preperation
+    let user_id = 1u32;
+    let amount_of_items = 5u32;
+    let items = [1u32, 2u32, 3u32, 4u32, 5u32];
+    */
+
+    if account == 0 && amount == 0 && user_id == 0 && amount_of_items == 0 {
+        println!("Faulty request. returning");
+        return false;
+    }
+
     let mut failed = false;
     // TCP connection duration before timeout
     let timeout = Duration::from_millis(5000);
@@ -119,9 +162,6 @@ fn handle_request(wallet_ip: &[u8; 4], order_ip: &[u8; 4], mut client_stream: &T
         }
     };
 
-    // Wallet micro service preperation
-    let account = 1u32;
-    let amount = 100u32;
     match wallet_stream.write(&account.to_be_bytes()) {
         Ok(_result) => {}
         Err(e) => {
@@ -140,11 +180,6 @@ fn handle_request(wallet_ip: &[u8; 4], order_ip: &[u8; 4], mut client_stream: &T
         }
     };
 
-    // Order micro service preperation
-    let user_id = 1u32;
-    let amount_of_items = 5u32;
-    let items = [1u32, 2u32, 3u32, 4u32, 5u32];
-
     match order_stream.write(&user_id.to_be_bytes()) {
         Ok(_result) => {}
         Err(e) => {
@@ -162,7 +197,7 @@ fn handle_request(wallet_ip: &[u8; 4], order_ip: &[u8; 4], mut client_stream: &T
             failed = true;
         }
     };
-    
+    /*
    for i in 0..amount_of_items {
         match order_stream.write(&items[i as usize].to_be_bytes()) {
             Ok(_result) => {}
@@ -172,6 +207,7 @@ fn handle_request(wallet_ip: &[u8; 4], order_ip: &[u8; 4], mut client_stream: &T
             }
         };
     }
+    */
     /*match order_stream.write(&[space]) {
         Ok(_result) => {}
         Err(e) => {
@@ -301,4 +337,70 @@ fn rollback(mut order_stream: TcpStream, mut wallet_stream: TcpStream) {
         }
     }
     println!("NB: Rollback Failed!");
+}
+
+fn read_http_request(client_stream: &TcpStream) -> (u32, u32, u32, u32){
+    let mut reader = BufReader::new(client_stream);
+
+    // Første linje i header
+    let mut http_request_definition = String::new();
+    let _result = reader.by_ref().read_line(&mut http_request_definition);
+    let http_request_definition_split: Vec<&str> = http_request_definition.split_whitespace().collect();
+    println!("{}", http_request_definition);
+
+    // Alle headers
+    let mut http_request_headers = Vec::new();
+    http_request_headers.push(http_request_definition.clone());
+
+    let mut has_body = false;
+    if http_request_definition_split[0] == "POST" {
+        has_body = true;
+    }
+    let mut body: Vec<u8>  = vec![];
+    for line in reader.by_ref().lines() {
+        let line_uw = line.unwrap();
+        println!("{}", line_uw);
+        if line_uw.len() > 15 {
+            if &line_uw[..15] == "Content-Length:"{
+                body = vec![0;(&line_uw[16..]).parse().unwrap()]
+            }
+        }
+        if line_uw == "" { 
+            if has_body {
+                let _result = reader.by_ref().read_exact(&mut body);
+            }
+            break;
+        }
+        http_request_headers.push(line_uw);
+    }
+    if !has_body {
+        return (0, 0, 0, 0);
+    }
+    if http_request_definition_split[1] == "/purchase" {
+        let mut body_string = String::new();
+        for byte in body {
+            body_string.push(byte as char);
+        }
+        println!("body string: {}", body_string);
+        let order: Order = match serde_json::from_str(&body_string[..]) {
+            Ok(data) => data,
+            Err(e) => {
+                println!("JSON serilization failed: {}", e);
+                return (0,0,0,0);
+            }
+        };
+        println!("JSON read succesfull");
+        return(order.account, order.amount, order.user_id, order.amount_of_items);
+    }
+    else {
+        return (0, 0, 0, 0);
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct Order {
+    account: u32,
+    amount: u32,
+    user_id: u32,
+    amount_of_items: u32
 }
