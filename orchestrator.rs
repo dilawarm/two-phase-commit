@@ -56,6 +56,10 @@ fn main() {
                         let response = "HTTP/1.1 404 Only POST is supported on this endpoint\n\n";
                         stream.write_all(response.as_bytes()).unwrap();
                     }
+                    else if status == 5 {
+                        let response = "HTTP/1.1 400 Amout of items dose not match number of entries in items array\n\n";
+                        stream.write_all(response.as_bytes()).unwrap();
+                    }
                     else {
                         let mut tries = 0;
                         while tries < 5 {
@@ -202,11 +206,6 @@ fn handle_request(wallet_ip: &[u8; 4], order_ip: &[u8; 4], account: u32, amount:
             failed = true;
         }
     };
-
-    if amount_of_items != items.len() as u32 {
-        println!("Amount of items dose not match item array length");
-        return false;
-    }
     
     for i in 0..amount_of_items {
         match order_stream.write(&items[i as usize].to_be_bytes()) {
@@ -399,6 +398,10 @@ fn read_http_request(client_stream: &TcpStream) -> (u8, u32, u32, u32, u32, Vec<
                 return (2, 0,0,0,0, vec![0]);
             }
         };
+        if order.amount_of_items != order.items.len() as u32 {
+            println!("Amount of items dose not match item array length");
+            return (5, 0, 0, 0, 0, vec![0]);
+        }
         println!("JSON read succesfull");
         return(1, order.account, order.amount, order.user_id, order.amount_of_items, order.items);
     }
