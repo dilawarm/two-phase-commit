@@ -77,7 +77,9 @@ fn main() {
                             println!("Could not fulfilll order");
                         }
                         else {
-                            let response = "HTTP/1.1 200 OK\n\n<html><body>Message Recieved</body></html>";
+                            let q = '"'.escape_default();
+                            //let response = "HTTP/1.1 200 OK\n\n{"output":'success'}\n\n";
+                            let response = "HTTP/1.1 200 OK\n\nsuccess";
                             stream.write_all(response.as_bytes()).unwrap();
                             println!("Order fulfilled");
                         }

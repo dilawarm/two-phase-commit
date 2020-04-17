@@ -111,7 +111,7 @@ func handlePrepare(conn net.Conn, password string) micro.Prep {
 
 func main() {
 	list = micro.List{List: make(map[int]bool)}
-	data, err := ioutil.ReadFile("../config")
+	data, err := ioutil.ReadFile("../.config")
 	if err != nil {
 		fmt.Println("File reading error", err)
 		os.Exit(1)
