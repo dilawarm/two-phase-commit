@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">22.22% </span>
+                <span class="strong">77.78% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>4/18</span>
+                <span class='fraction'>14/18</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">50% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/4</span>
+                <span class='fraction'>2/4</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/3</span>
+                <span class='fraction'>3/3</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">22.22% </span>
+                <span class="strong">77.78% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>4/18</span>
+                <span class='fraction'>14/18</span>
             </div>
         
             
@@ -55,7 +55,7 @@
             Press <em>n</em> or <em>j</em> to go to the next uncovered block, <em>b</em>, <em>p</em> or <em>k</em> for the previous block.
         </p>
     </div>
-    <div class='status-line low'></div>
+    <div class='status-line medium'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -89,22 +89,22 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -114,23 +114,23 @@ var fs = require("fs");
 var path = require("path");
 &nbsp;
 &nbsp;
-module.exports = function <span class="fstat-no" title="function not covered" >run(</span>filename, pool, done) {
-<span class="cstat-no" title="statement not covered" >  console.log("runsqlfile: reading file " + filename);</span>
-  let sql = <span class="cstat-no" title="statement not covered" >fs.readFileSync(path.join(__dirname, filename), "utf8");</span>
-<span class="cstat-no" title="statement not covered" >  pool.getConnection(<span class="fstat-no" title="function not covered" >(e</span>rr, connection) =&gt; {</span>
-<span class="cstat-no" title="statement not covered" >    if (err) {</span>
+module.exports = function run(filename, pool, done) {
+  console.log("runsqlfile: reading file " + filename);
+  let sql = fs.readFileSync(path.join(__dirname, filename), "utf8");
+  pool.getConnection((err, connection) =&gt; {
+    <span class="missing-if-branch" title="if path not taken" >I</span>if (err) {
 <span class="cstat-no" title="statement not covered" >      console.log("runsqlfile: error connecting");</span>
 <span class="cstat-no" title="statement not covered" >      done();</span>
     } else {
-<span class="cstat-no" title="statement not covered" >      console.log("runsqlfile: connected");</span>
-<span class="cstat-no" title="statement not covered" >      connection.query(sql, <span class="fstat-no" title="function not covered" >(e</span>rr, rows) =&gt; {</span>
-<span class="cstat-no" title="statement not covered" >        connection.release();</span>
-<span class="cstat-no" title="statement not covered" >        if (err) {</span>
+      console.log("runsqlfile: connected");
+      connection.query(sql, (err, rows) =&gt; {
+        connection.release();
+        <span class="missing-if-branch" title="if path not taken" >I</span>if (err) {
 <span class="cstat-no" title="statement not covered" >          console.log(err);</span>
 <span class="cstat-no" title="statement not covered" >          done();</span>
         } else {
-<span class="cstat-no" title="statement not covered" >          console.log("runsqlfile: run ok");</span>
-<span class="cstat-no" title="statement not covered" >          done();</span>
+          console.log("runsqlfile: run ok");
+          done();
         }
       });
     }
@@ -142,7 +142,7 @@ module.exports = function <span class="fstat-no" title="function not covered" >r
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank">istanbul</a>
-                at Fri Apr 17 2020 19:28:43 GMT+0200 (Central European Summer Time)
+                at Fri Apr 17 2020 20:56:08 GMT+0200 (Central European Summer Time)
             </div>
         </div>
         <script src="prettify.js"></script>

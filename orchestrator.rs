@@ -72,13 +72,14 @@ fn main() {
                             }
                         }
                         if tries >= 5 {
-                            let response = "HTTP/1.1 500 Could not fulfill order\n\n";
+                            let response = "HTTP/1.1 500\n\nCould not fulfill order";
                             stream.write_all(response.as_bytes()).unwrap();
                             println!("Could not fulfilll order");
                         }
                         else {
                             let q = '"'.escape_default();
-                            //let response = "HTTP/1.1 200 OK\n\n{"output":'success'}\n\n";
+                            //let data = r#"{"output": "success"}"#;
+                            //let response = "HTTP/1.1 200 OK\n\n".to_owned() + data;
                             let response = "HTTP/1.1 200 OK\n\nsuccess";
                             stream.write_all(response.as_bytes()).unwrap();
                             println!("Order fulfilled");
