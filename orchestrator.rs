@@ -35,11 +35,7 @@ fn main() {
     
     let mut threads = Vec::new();
     Arc::new((Mutex::new(String::new()), Condvar::new()));
-<<<<<<< HEAD
-    let listener = TcpListener::bind(listen.to_owned()+":3005").unwrap();
-=======
     let listener = TcpListener::bind(listen.to_owned()+":3000").unwrap();
->>>>>>> a0960497fcf1cb679c0f42fa4a4881d68411bc99
     for stream in listener.incoming() {
         let mut stream = stream.unwrap();
         {
@@ -47,10 +43,10 @@ fn main() {
             thread::Builder::new()
                 .name("coordinator".to_string())
                 .spawn(move || {
-                    let (account, amount, user_id, amount_of_items) = read_http_request(&stream);
+                    let (account, amount, user_id, amount_of_items, items) = read_http_request(&stream);
                     let mut tries = 0;
                     while tries < 5 {
-                        if handle_request(&wallet_ip, &order_ip, account, amount, user_id, amount_of_items, &stream) {
+                        if handle_request(&wallet_ip, &order_ip, account, amount, user_id, amount_of_items, &items, &stream) {
                             break;
                         }
                         else {
@@ -103,7 +99,7 @@ fn main() {
     */
 }
 
-fn handle_request(wallet_ip: &[u8; 4], order_ip: &[u8; 4], account: u32, amount:u32, user_id: u32, amount_of_items: u32, mut client_stream: &TcpStream) -> bool {
+fn handle_request(wallet_ip: &[u8; 4], order_ip: &[u8; 4], account: u32, amount:u32, user_id: u32, amount_of_items: u32, items: &Vec<u32>, mut client_stream: &TcpStream) -> bool {
     /*
     let response = "HTTP/1.1 200 OK\n\n<html><body>Message Recieved</body></html>";
     client_stream.write_all(response.as_bytes()).unwrap();
@@ -197,8 +193,13 @@ fn handle_request(wallet_ip: &[u8; 4], order_ip: &[u8; 4], account: u32, amount:
             failed = true;
         }
     };
-    /*
-   for i in 0..amount_of_items {
+
+    if amount_of_items != items.len() as u32 {
+        println!("Amount of items dose not match item array length");
+        return false;
+    }
+    
+    for i in 0..amount_of_items {
         match order_stream.write(&items[i as usize].to_be_bytes()) {
             Ok(_result) => {}
             Err(e) => {
@@ -207,7 +208,7 @@ fn handle_request(wallet_ip: &[u8; 4], order_ip: &[u8; 4], account: u32, amount:
             }
         };
     }
-    */
+    
     /*match order_stream.write(&[space]) {
         Ok(_result) => {}
         Err(e) => {
@@ -339,7 +340,7 @@ fn rollback(mut order_stream: TcpStream, mut wallet_stream: TcpStream) {
     println!("NB: Rollback Failed!");
 }
 
-fn read_http_request(client_stream: &TcpStream) -> (u32, u32, u32, u32){
+fn read_http_request(client_stream: &TcpStream) -> (u32, u32, u32, u32, Vec<u32>){
     let mut reader = BufReader::new(client_stream);
 
     // Første linje i header
@@ -374,7 +375,7 @@ fn read_http_request(client_stream: &TcpStream) -> (u32, u32, u32, u32){
         http_request_headers.push(line_uw);
     }
     if !has_body {
-        return (0, 0, 0, 0);
+        return (0, 0, 0, 0, vec![0]);
     }
     if http_request_definition_split[1] == "/purchase" {
         let mut body_string = String::new();
@@ -386,14 +387,14 @@ fn read_http_request(client_stream: &TcpStream) -> (u32, u32, u32, u32){
             Ok(data) => data,
             Err(e) => {
                 println!("JSON serilization failed: {}", e);
-                return (0,0,0,0);
+                return (0,0,0,0, vec![0]);
             }
         };
         println!("JSON read succesfull");
-        return(order.account, order.amount, order.user_id, order.amount_of_items);
+        return(order.account, order.amount, order.user_id, order.amount_of_items, order.items);
     }
     else {
-        return (0, 0, 0, 0);
+        return (0, 0, 0, 0, vec![0]);
     }
 }
 
@@ -402,5 +403,6 @@ struct Order {
     account: u32,
     amount: u32,
     user_id: u32,
-    amount_of_items: u32
+    amount_of_items: u32,
+    items: Vec<u32>
 }
