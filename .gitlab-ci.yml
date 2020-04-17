@@ -1,9 +1,9 @@
 image: node:latest
 services:
-  - name: mysql:latest
-    alias: mysql-1
-  - name: mysql:latest
-    alias: mysql-2
+- name: mysql:latest
+  alias: mysql-1
+- name: mysql:latest
+  alias: mysql-2
 
 variables:
   MYSQL-1_DATABASE: wallet_service
@@ -11,6 +11,9 @@ variables:
   MYSQL-1_ROOT_PASSWORD_WALLET: secret
   MYSQL-2_ROOT_PASSWORD_ORDER: secret
 
+connect:
+  image: mysql-1
+  script: - echo "SELECT 'OK';" | mysql --user=root --password="$MYSQL_ROOT_PASSWORD" --host=mysql "$MYSQL_DATABASE"
 
 stages:
   - install
@@ -27,8 +30,8 @@ install:
 test:
   stage: test
   script: 
-    - mysql -u root && create database wallet_service
-
+    - touch .config
+    - 
 
 deploy:
   stage: deploy

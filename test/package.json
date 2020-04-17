@@ -1,0 +1,18 @@
+{
+    "scripts": {
+        "test": "jest --detectOpenHandles --forceExit"
+    },
+    "jest": {
+        "verbose": true,
+        "collectCoverage": true,
+        "coverageReporters": [
+            "json",
+            "html"
+        ]
+    },
+    "dependencies": {
+        "axios": "^0.19.2",
+        "jest": "^25.3.0",
+        "mysql": "^2.18.1"
+    }
+}
