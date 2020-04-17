@@ -1,23 +1,8 @@
 image: node:latest
-services:
-- name: mysql:latest
-  alias: mysql-1
-- name: mysql:latest
-  alias: mysql-2
-
-variables:
-  MYSQL-1_DATABASE: wallet_service
-  MYSQL-2_DATABASE: order_service
-  MYSQL-1_ROOT_PASSWORD_WALLET: secret
-  MYSQL-2_ROOT_PASSWORD_ORDER: secret
-
-connect:
-  image: mysql-1
-  script: - echo "SELECT 'OK';" | mysql --user=root --password="$MYSQL_ROOT_PASSWORD" --host=mysql "$MYSQL_DATABASE"
+services: mysql:latest
 
 stages:
   - install
-  - test
   - deploy # Jobs placed in build-stage will run last after test-jobs
 
 install:
@@ -27,12 +12,6 @@ install:
     - apt-get --assume-yes install software-properties-common
     - add-apt-repository ppa:longsleep/golang-backports
     - apt install --assume-yes golang-go
-
-test:
-  stage: test
-  script: 
-    - touch .config
-    - cd test && npm install && npm test
 
 deploy:
   stage: deploy

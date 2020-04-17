@@ -35,11 +35,7 @@ fn main() {
     
     let mut threads = Vec::new();
     Arc::new((Mutex::new(String::new()), Condvar::new()));
-<<<<<<< HEAD
-    let listener = TcpListener::bind(listen.to_owned()+":3005").unwrap();
-=======
     let listener = TcpListener::bind(listen.to_owned()+":3000").unwrap();
->>>>>>> 98663d6d72b9a2dd4b61e326ac2f92ed760c3937
     for stream in listener.incoming() {
         let mut stream = stream.unwrap();
         {

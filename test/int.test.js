@@ -5,9 +5,9 @@ const runsqlfile = require("./runsqlfile.js");
 
 var pool1 = mysql.createPool({
     connectionLimit: 1,
-    host: "mysql-1",
-    user: "root",
-    password: "secret",
+    host: "mysql",
+    user: "dilawar",
+    password: "passord123",
     database: "wallet_service",
     debug: false,
     multipleStatements: true
@@ -16,8 +16,8 @@ var pool1 = mysql.createPool({
 var pool2 = mysql.createPool({
     connectionLimit: 1,
     host: "mysql-2",
-    user: "root",
-    password: "secret",
+    user: "dilawar",
+    password: "passord123",
     database: "order_service",
     debug: false,
     multipleStatements: true
