@@ -43,26 +43,40 @@ fn main() {
             thread::Builder::new()
                 .name("coordinator".to_string())
                 .spawn(move || {
-                    let (account, amount, user_id, amount_of_items, items) = read_http_request(&stream);
-                    let mut tries = 0;
-                    while tries < 5 {
-                        if handle_request(&wallet_ip, &order_ip, account, amount, user_id, amount_of_items, &items, &stream) {
-                            break;
-                        }
-                        else {
-                            tries += 1;
-                            println!("Failed attempt #{}", tries);
-                        }
-                    }
-                    if tries >= 5 {
-                        let response = "HTTP/1.1 500 Could not fulfill order\n\n";
+                    let (status, account, amount, user_id, amount_of_items, items) = read_http_request(&stream);
+                    if status == 2 {
+                        let response = "HTTP/1.1 400 JSON could not be serialized, check syntax\n\n";
                         stream.write_all(response.as_bytes()).unwrap();
-                        println!("Could not fulfilll order");
+                    }
+                    else if status == 3 {
+                        let response = "HTTP/1.1 404 Endpoint not found\n\n";
+                        stream.write_all(response.as_bytes()).unwrap();
+                    }
+                    else if status == 4 {
+                        let response = "HTTP/1.1 404 Only POST is supported on this endpoint\n\n";
+                        stream.write_all(response.as_bytes()).unwrap();
                     }
                     else {
-                        let response = "HTTP/1.1 200 OK\n\n<html><body>Message Recieved</body></html>";
-                        stream.write_all(response.as_bytes()).unwrap();
-                        println!("Order fulfilled");
+                        let mut tries = 0;
+                        while tries < 5 {
+                            if handle_request(&wallet_ip, &order_ip, account, amount, user_id, amount_of_items, &items, &stream) {
+                                break;
+                            }
+                            else {
+                                tries += 1;
+                                println!("Failed attempt #{}", tries);
+                            }
+                        }
+                        if tries >= 5 {
+                            let response = "HTTP/1.1 500 Could not fulfill order\n\n";
+                            stream.write_all(response.as_bytes()).unwrap();
+                            println!("Could not fulfilll order");
+                        }
+                        else {
+                            let response = "HTTP/1.1 200 OK\n\n<html><body>Message Recieved</body></html>";
+                            stream.write_all(response.as_bytes()).unwrap();
+                            println!("Order fulfilled");
+                        }
                     }
                 }),
         );
@@ -113,11 +127,6 @@ fn handle_request(wallet_ip: &[u8; 4], order_ip: &[u8; 4], account: u32, amount:
     let amount_of_items = 5u32;
     let items = [1u32, 2u32, 3u32, 4u32, 5u32];
     */
-
-    if account == 0 && amount == 0 && user_id == 0 && amount_of_items == 0 {
-        println!("Faulty request. returning");
-        return false;
-    }
 
     let mut failed = false;
     // TCP connection duration before timeout
@@ -340,7 +349,7 @@ fn rollback(mut order_stream: TcpStream, mut wallet_stream: TcpStream) {
     println!("NB: Rollback Failed!");
 }
 
-fn read_http_request(client_stream: &TcpStream) -> (u32, u32, u32, u32, Vec<u32>){
+fn read_http_request(client_stream: &TcpStream) -> (u8, u32, u32, u32, u32, Vec<u32>){
     let mut reader = BufReader::new(client_stream);
 
     // Første linje i header
@@ -375,7 +384,7 @@ fn read_http_request(client_stream: &TcpStream) -> (u32, u32, u32, u32, Vec<u32>
         http_request_headers.push(line_uw);
     }
     if !has_body {
-        return (0, 0, 0, 0, vec![0]);
+        return (4, 0, 0, 0, 0, vec![0]);
     }
     if http_request_definition_split[1] == "/purchase" {
         let mut body_string = String::new();
@@ -387,14 +396,14 @@ fn read_http_request(client_stream: &TcpStream) -> (u32, u32, u32, u32, Vec<u32>
             Ok(data) => data,
             Err(e) => {
                 println!("JSON serilization failed: {}", e);
-                return (0,0,0,0, vec![0]);
+                return (2, 0,0,0,0, vec![0]);
             }
         };
         println!("JSON read succesfull");
-        return(order.account, order.amount, order.user_id, order.amount_of_items, order.items);
+        return(1, order.account, order.amount, order.user_id, order.amount_of_items, order.items);
     }
     else {
-        return (0, 0, 0, 0, vec![0]);
+        return (3, 0, 0, 0, 0, vec![0]);
     }
 }
 
