@@ -43,17 +43,26 @@ fn main() {
             thread::Builder::new()
                 .name("coordinator".to_string())
                 .spawn(move || {
-                    let mut tries = 1;
-                    while !handle_request(&wallet_ip, &order_ip, &stream) && tries < 5 {
-                        tries += 1;
+                    let (account, amount, user_id, amount_of_items) = read_http_request(&stream);
+                    let mut tries = 0;
+                    while tries < 5 {
+                        if handle_request(&wallet_ip, &order_ip, account, amount, user_id, amount_of_items, &stream) {
+                            break;
+                        }
+                        else {
+                            tries += 1;
+                            println!("Failed attempt #{}", tries);
+                        }
                     }
                     if tries >= 5 {
                         let response = "HTTP/1.1 500 Could not fulfill order\n\n";
                         stream.write_all(response.as_bytes()).unwrap();
+                        println!("Could not fulfilll order");
                     }
                     else {
                         let response = "HTTP/1.1 200 OK\n\n<html><body>Message Recieved</body></html>";
                         stream.write_all(response.as_bytes()).unwrap();
+                        println!("Order fulfilled");
                     }
                 }),
         );
@@ -90,7 +99,7 @@ fn main() {
     */
 }
 
-fn handle_request(wallet_ip: &[u8; 4], order_ip: &[u8; 4], mut client_stream: &TcpStream) -> bool {
+fn handle_request(wallet_ip: &[u8; 4], order_ip: &[u8; 4], account: u32, amount:u32, user_id: u32, amount_of_items: u32, mut client_stream: &TcpStream) -> bool {
     /*
     let response = "HTTP/1.1 200 OK\n\n<html><body>Message Recieved</body></html>";
     client_stream.write_all(response.as_bytes()).unwrap();
@@ -104,8 +113,6 @@ fn handle_request(wallet_ip: &[u8; 4], order_ip: &[u8; 4], mut client_stream: &T
     let amount_of_items = 5u32;
     let items = [1u32, 2u32, 3u32, 4u32, 5u32];
     */
-
-    let (account, amount, user_id, amount_of_items) = read_http_request(&client_stream);
 
     if account == 0 && amount == 0 && user_id == 0 && amount_of_items == 0 {
         println!("Faulty request. returning");
