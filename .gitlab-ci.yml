@@ -1,4 +1,5 @@
 image: node:latest
+<<<<<<< HEAD
 services:
 - name: mysql:latest
   alias: mysql-1
@@ -14,6 +15,8 @@ variables:
 connect:
   image: mysql-1
   script: - echo "SELECT 'OK';" | mysql --user=root --password="$MYSQL_ROOT_PASSWORD" --host=mysql "$MYSQL_DATABASE"
+=======
+>>>>>>> 98663d6d72b9a2dd4b61e326ac2f92ed760c3937
 
 stages:
   - install
@@ -23,9 +26,10 @@ stages:
 install:
   stage: install
   script:
-    - add-apt-repository ppa:longsleep/golang-backports
     - apt update
-    - apt install golang-go
+    - apt-get --assume-yes install software-properties-common
+    - add-apt-repository ppa:longsleep/golang-backports
+    - apt install --assume-yes golang-go
 
 test:
   stage: test
