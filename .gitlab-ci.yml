@@ -9,9 +9,9 @@ install:
   stage: install
   script:
     - apt update
-    - apt-get install software-properties-common
+    - apt-get --assume-yes install software-properties-common
     - add-apt-repository ppa:longsleep/golang-backports
-    - apt install golang-go
+    - apt install --assume-yes golang-go
 
 test:
   stage: test
