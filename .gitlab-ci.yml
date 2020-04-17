@@ -1,5 +1,4 @@
 image: node:latest
-services: mysql:latest
 
 stages:
   - install
