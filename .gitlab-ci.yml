@@ -1,5 +1,4 @@
 image: node:latest
-<<<<<<< HEAD
 services:
 - name: mysql:latest
   alias: mysql-1
@@ -15,8 +14,6 @@ variables:
 connect:
   image: mysql-1
   script: - echo "SELECT 'OK';" | mysql --user=root --password="$MYSQL_ROOT_PASSWORD" --host=mysql "$MYSQL_DATABASE"
-=======
->>>>>>> 98663d6d72b9a2dd4b61e326ac2f92ed760c3937
 
 stages:
   - install
@@ -35,7 +32,7 @@ test:
   stage: test
   script: 
     - touch .config
-    - 
+    - cd test && npm install && npm test
 
 deploy:
   stage: deploy
