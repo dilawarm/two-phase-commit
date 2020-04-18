@@ -57,7 +57,7 @@ fn main() {
                         stream.write_all(response.as_bytes()).unwrap();
                     }
                     else if status == 5 {
-                        let response = "HTTP/1.1 400 Amout of items dose not match number of entries in items array\n\n";
+                        let response = "HTTP/1.1 400\n\nAmout of items dose not match number of entries in items array";
                         stream.write_all(response.as_bytes()).unwrap();
                     }
                     else {

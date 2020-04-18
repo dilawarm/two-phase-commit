@@ -38,7 +38,7 @@ afterAll(()=>{
     pool2.end();
 });
 
-test("legge inn ordre som funker", done=>{
+test("valid order", done=>{
     let orcRes = "";
     const data = {
         "account":1,
@@ -65,7 +65,7 @@ test("legge inn ordre som funker", done=>{
       });
 });
 
-test("legge inn ordre med ugyldig bruker id", done=>{
+test("invalid user id", done=>{
     let orcRes = "";
     const data = {
         "account":69,
@@ -85,6 +85,60 @@ test("legge inn ordre med ugyldig bruker id", done=>{
       .then(data => {
           console.log(data);
           expect(data).toBe("Could not fulfill order");
+          done();
+      })
+      .catch((error) => {
+        console.error('Error:', error);
+      });
+});
+
+test("Price is greater than balance", done=>{
+    let orcRes = "";
+    const data = {
+        "account":1,
+        "amount":10000,
+        "user_id":1,
+        "amount_of_items":5,
+        "items": [1,2,3,4,5]
+    }
+    fetch("http://localhost:3000/purchase", {
+        method: "POST", 
+        headers: {
+            'Content-Type': 'application/json',
+          },
+        body: JSON.stringify(data),
+      })
+      .then(response => response.text())
+      .then(data => {
+          console.log(data);
+          expect(data).toBe("Could not fulfill order");
+          done();
+      })
+      .catch((error) => {
+        console.error('Error:', error);
+      });
+});
+
+test("too many orders", done=>{
+    let orcRes = "";
+    const data = {
+        "account":1,
+        "amount":10000,
+        "user_id":1,
+        "amount_of_items":8,
+        "items": [1,2,3,4,5]
+    }
+    fetch("http://localhost:3000/purchase", {
+        method: "POST", 
+        headers: {
+            'Content-Type': 'application/json',
+          },
+        body: JSON.stringify(data),
+      })
+      .then(response => response.text())
+      .then(data => {
+          console.log(data);
+          expect(data).toBe("Amout of items dose not match number of entries in items array");
           done();
       })
       .catch((error) => {

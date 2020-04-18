@@ -82,7 +82,6 @@ func handlePrepare(conn net.Conn, password string) micro.Prep {
 		for results.Next() {
 			err = results.Scan(&total_from_db)
 			if err != nil {
-				//conn.Write([]byte(strconv.Itoa(6))) // 6 = Wrong format on wallet object
 				return micro.Prep{10, tx, user_id} //
 			}
 			fmt.Println(total_from_db)
