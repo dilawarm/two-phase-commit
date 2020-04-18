@@ -15,6 +15,8 @@ test:
     - touch ~/.ssh/id_rsa.pub
     - chmod 600 ~/.ssh/id_rsa.pub # Required permission by ssh
     - echo "$SSH_PUBLIC_KEY" > ~/.ssh/id_rsa.pub
+    - ssh orc@35.223.240.171 "echo $TEST_ADDRESSES  > two-phase-commit/addresses"
+    - ssh orc@35.223.240.171 "cd two-phase-commit && /bin/bash runservers && cd test && npm install && npm test"
 
 deploy:
   stage: deploy
