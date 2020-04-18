@@ -6,11 +6,15 @@ require('request').debug = true
 var mysql = require("mysql");
 const runsqlfile = require("./runsqlfile.js");
 
+let config = require("./config")
+console.log(config.user)
+
+
 var pool1 = mysql.createPool({
     connectionLimit: 1,
-    host: "localhost",
-    user: "dilawar",
-    password: "passord123",
+    host: config.host,
+    user: config.user,
+    password: config.password,
     database: "wallet_service",
     debug: false,
     multipleStatements: true
@@ -18,9 +22,9 @@ var pool1 = mysql.createPool({
 
 var pool2 = mysql.createPool({
     connectionLimit: 1,
-    host: "localhost",
-    user: "dilawar",
-    password: "passord123",
+    host: config.host,
+    user: config.user,
+    password: config.password,
     database: "order_service",
     debug: false,
     multipleStatements: true
