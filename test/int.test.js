@@ -51,7 +51,7 @@ test("valid order", done=>{
         "amount_of_items":5,
         "items": [1,2,3,4,5]
     }
-    fetch("http://localhost:3000/purchase", {
+    fetch("http://"+config.host+":3000/purchase", {
         method: "POST", 
         headers: {
             'Content-Type': 'application/json',
@@ -78,7 +78,7 @@ test("invalid user id", done=>{
         "amount_of_items":5,
         "items": [1,2,3,4,5]
     }
-    fetch("http://localhost:3000/purchase", {
+    fetch("http://"+config.host+":3000/purchase", {
         method: "POST", 
         headers: {
             'Content-Type': 'application/json',
@@ -105,7 +105,7 @@ test("Price is greater than balance", done=>{
         "amount_of_items":5,
         "items": [1,2,3,4,5]
     }
-    fetch("http://localhost:3000/purchase", {
+    fetch("http://"+config.host+":3000/purchase", {
         method: "POST", 
         headers: {
             'Content-Type': 'application/json',
@@ -132,7 +132,7 @@ test("too many orders", done=>{
         "amount_of_items":8,
         "items": [1,2,3,4,5]
     }
-    fetch("http://localhost:3000/purchase", {
+    fetch("http://"+config.host+":3000/purchase", {
         method: "POST", 
         headers: {
             'Content-Type': 'application/json',
