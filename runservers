@@ -4,10 +4,9 @@
 set -m
   
 # Start the primary process and put it in the background
-cd microservices && go run order.go & cd microservices && go run wallet.go &
+cd microservices && go run order.go & cd microservices && go run wallet.go
   
 # Start the helper process
-./orchestrator
   
 # the my_helper_process might need to know how to wait on the
 # primary process to start before it does its work and returns

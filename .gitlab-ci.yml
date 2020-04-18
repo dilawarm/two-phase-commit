@@ -1,17 +1,8 @@
 image: node:latest
 
 stages:
-  - install
   - test
   - deploy # Jobs placed in build-stage will run last after test-jobs
-
-install:
-  stage: install
-  script:
-    - apt update
-    - apt-get --assume-yes install software-properties-common
-    - add-apt-repository ppa:longsleep/golang-backports
-    - apt install --assume-yes golang-go
 
 test:
   stage: test
