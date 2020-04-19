@@ -12,8 +12,8 @@ console.log(config.user)
 
 var pool1 = mysql.createPool({
     connectionLimit: 1,
-    host: "mysql",
-    user: "root",
+    host: config.host,
+    user: config.user,
     password: config.password,
     database: "wallet_service",
     debug: false,
@@ -22,8 +22,8 @@ var pool1 = mysql.createPool({
 
 var pool2 = mysql.createPool({
     connectionLimit: 1,
-    host: "mysql",
-    user: "root",
+    host: config.host,
+    user: config.user,
     password: config.password,
     database: "order_service",
     debug: false,
@@ -69,6 +69,7 @@ test("valid order", done=>{
         console.error('Error:', error);
       });
 });
+
 /*
 test("invalid user id", done=>{
     let orcRes = "";
