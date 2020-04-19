@@ -18,10 +18,10 @@ install:
   stage: install
   script:
     - apt-get update
+    - curl -sL https://deb.nodesource.com/setup_10.x | bash -
     - apt-get install -y cargo
     - apt-get install curl
-    - curl -sL https://deb.nodesource.com/setup_10.x | -E bash -
-    - apt install nodejs
+    - apt install -y nodejs
     - go get github.com/go-sql-driver/mysql
 
 test:
