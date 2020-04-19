@@ -23,6 +23,7 @@ connect:
   image: mysql
   stage: prepare
   script:
+    - apt-get update && apt-get --assume-yes install mysql-server mysql-common mysql-client
     - service mysql start
     - echo "CREATE DATABASE wallet_service;" | mysql -u"$MYSQL_USER" -p"$MYSQL_ROOT_PASSWORD" -h mysql "$MYSQL_DATABASE"
 
