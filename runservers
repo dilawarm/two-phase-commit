@@ -14,4 +14,3 @@ cd microservices && go run order.go & cd microservices && go run wallet.go & car
   
 # now we bring the primary process back into the foreground
 # and leave it there
-fg %1
