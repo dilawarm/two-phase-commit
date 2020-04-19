@@ -25,7 +25,7 @@ test:
     - apt install -y nodejs
     - go get github.com/go-sql-driver/mysql
     - touch .config
-    - echo "root:passord123" > .config
+    - echo "root:passord123@tcp(mysql:3306)" > .config
     - rm Cargo.lock
     - cargo build
     - nohup /bin/bash runservers &
