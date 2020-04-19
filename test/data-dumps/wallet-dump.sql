@@ -18,7 +18,7 @@
 --
 -- Table structure for table `wallet`
 --
-CREATE DATABASE order_service;
+CREATE DATABASE IF NOT EXISTS order_service;
 
 DROP TABLE IF EXISTS `wallet`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;

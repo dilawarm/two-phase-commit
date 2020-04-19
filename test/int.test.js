@@ -12,8 +12,8 @@ console.log(config.user)
 
 var pool1 = mysql.createPool({
     connectionLimit: 1,
-    host: "mysql",
-    user: "root",
+    host: config.host,
+    user: config.user,
     password: config.password,
     database: "wallet_service",
     debug: false,
@@ -22,8 +22,8 @@ var pool1 = mysql.createPool({
 
 var pool2 = mysql.createPool({
     connectionLimit: 1,
-    host: "mysql",
-    user: "root",
+    host: config.host,
+    user: config.user,
     password: config.password,
     database: "order_service",
     debug: false,
@@ -52,7 +52,7 @@ test("valid order", done=>{
         "amount_of_items":5,
         "items": [1,2,3,4,5]
     }
-    fetch("http://"+config.host+":3000/purchase", {
+    fetch("http://localhost:3000/purchase", {
         method: "POST", 
         headers: {
             'Content-Type': 'application/json',
@@ -69,7 +69,8 @@ test("valid order", done=>{
         console.error('Error:', error);
       });
 });
-/*
+
+
 test("invalid user id", done=>{
     let orcRes = "";
     const data = {
@@ -79,7 +80,7 @@ test("invalid user id", done=>{
         "amount_of_items":5,
         "items": [1,2,3,4,5]
     }
-    fetch("http://"+config.host+":3000/purchase", {
+    fetch("http://localhost:3000/purchase", {
         method: "POST", 
         headers: {
             'Content-Type': 'application/json',
@@ -106,7 +107,7 @@ test("Price is greater than balance", done=>{
         "amount_of_items":5,
         "items": [1,2,3,4,5]
     }
-    fetch("http://"+config.host+":3000/purchase", {
+    fetch("http://localhost:3000/purchase", {
         method: "POST", 
         headers: {
             'Content-Type': 'application/json',
@@ -133,7 +134,7 @@ test("too many orders", done=>{
         "amount_of_items":8,
         "items": [1,2,3,4,5]
     }
-    fetch("http://"+config.host+":3000/purchase", {
+    fetch("http://localhost:3000/purchase", {
         method: "POST", 
         headers: {
             'Content-Type': 'application/json',
@@ -149,4 +150,4 @@ test("too many orders", done=>{
       .catch((error) => {
         console.error('Error:', error);
       });
-});*/
+});
