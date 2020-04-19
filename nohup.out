@@ -1,86 +1,14 @@
-    Finished dev [unoptimized + debuginfo] target(s) in 0.02s
-     Running `target/debug/orchestrator`
-127.0.0.1 127.0.0.1 127.0.0.1 
-127
-[127, 0, 0, 1]
-[127, 0, 0, 1]
-HOST:  127.0.0.1
-Error listening:  listen tcp 127.0.0.1:3335: bind: address already in use
-exit status 1
-HOST:  127.0.0.1
-Error listening: listen tcp 127.0.0.1:3332: bind: address already in use
-exit status 1
     Finished dev [unoptimized + debuginfo] target(s) in 0.01s
      Running `target/debug/orchestrator`
 127.0.0.1 127.0.0.1 127.0.0.1 
 127
 [127, 0, 0, 1]
 [127, 0, 0, 1]
-thread 'main' panicked at 'called `Result::unwrap()` on an `Err` value: Os { code: 98, kind: AddrInUse, message: "Address already in use" }', orchestrator.rs:32:20
-note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
-HOST:  127.0.0.1
+thread 'main' panicked at 'called `Result::unwrap()` on an `Err` value: Os { code: 98, kind: AddrInUse, message: "Address already in use" }', src/libcore/result.rs:1188:5
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace.
 HOST:  127.0.0.1
 Error listening:  listen tcp 127.0.0.1:3335: bind: address already in use
+exit status 1
+HOST:  127.0.0.1
 Error listening: listen tcp 127.0.0.1:3332: bind: address already in use
 exit status 1
-exit status 1
-POST /purchase HTTP/1.1
-
-Content-Type: application/json
-Accept: */*
-Content-Length: 78
-User-Agent: node-fetch/1.0 (+https://github.com/bitinn/node-fetch)
-Accept-Encoding: gzip,deflate
-Connection: close
-Host: localhost:3000
-
-body: {"account":1,"amount":100,"user_id":1,"amount_of_items":5,"items":[1,2,3,4,5]}
-JSON read succesfull
-wallet response: 1 (OK Prepare)
-order response: 1 (OK Prepare)Commiting changes
-NB! Order service failed to commit: Connection reset by peer (os error 104)
-NB! Order service failed to commit twice. Contact system administrator. Error: Broken pipe (os error 32)
-Failed attempt #1
-wallet response: 1 (OK Prepare)
-order response: 1 (OK Prepare)Commiting changes
-Order fulfilled
-    Finished dev [unoptimized + debuginfo] target(s) in 0.05s
-     Running `target/debug/orchestrator`
-127.0.0.1 127.0.0.1 127.0.0.1 
-127
-[127, 0, 0, 1]
-[127, 0, 0, 1]
-HOST:  127.0.0.1
-Listening on 127.0.0.1:3332
-started new connection
-HOST:  127.0.0.1
-Listening on 127.0.0.1:3335
-started new connection
-POST /purchase HTTP/1.1
-
-Content-Type: application/json
-Accept: */*
-Content-Length: 78
-User-Agent: node-fetch/1.0 (+https://github.com/bitinn/node-fetch)
-Accept-Encoding: gzip,deflate
-Connection: close
-Host: localhost:3000
-
-body: {"account":1,"amount":100,"user_id":1,"amount_of_items":5,"items":[1,2,3,4,5]}
-JSON read succesfull
-started new connection
-started new connection
-1 100
-map[]
-1 100
-1 0
-dilawar:passord123
-1
-ID : 5
-Wallet : {1 8400}
-1
-wallet response: 1 (OK Prepare)
-order response: 1 (OK Prepare)Commiting changes
-ID : 1
-Order fulfilled
-Transaction rolled back

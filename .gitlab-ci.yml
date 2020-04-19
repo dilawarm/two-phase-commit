@@ -23,9 +23,8 @@ test:
     - go get github.com/go-sql-driver/mysql
     - touch .config
     - echo "root:passord123" > .config
-    - rm -rf Cargo.lock
-    - nohup /bin/bash runservers & 
-    - sleep 3
+    - rm Cargo.lock
+    - setsid nohup /bin/bash runservers > nohup.out &
     - cd test && npm install && npm test
 
 

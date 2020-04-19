@@ -29,7 +29,7 @@ fn main() {
 
     // The server listens for http requests on port 3000
     let mut threads = Vec::new();
-    let listener = TcpListener::bind(listen.to_owned()+":3000").unwrap();
+    let listener = TcpListener::bind(listen.to_owned()+":3001").unwrap();
     for stream in listener.incoming() {
         // Http requests are handled by individual threads
         let mut stream = stream.unwrap();
