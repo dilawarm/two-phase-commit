@@ -1,3 +1,5 @@
+declare var require: any
+
 import { Component } from '@angular/core';
 
 const fetch = require("node-fetch");
@@ -42,8 +44,9 @@ export class AppComponent {
       "items": [1,2,3,4,5]
   }
 
-    fetch("http://35.223.240.171:3000/purchase", {
+    fetch("http://localhost:3000/purchase", {
       method: "POST", 
+      mode: "cors",
       headers: {
           'Content-Type': 'application/json',
         },
