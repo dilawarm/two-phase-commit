@@ -19,7 +19,7 @@ test:
     - apt-get update
     - curl -sL https://deb.nodesource.com/setup_10.x | bash -
     - apt-get install -y cargo
-    - cargo --version
+    - rustc --version
     - apt install -y nodejs
     - go get github.com/go-sql-driver/mysql
     - touch .config
