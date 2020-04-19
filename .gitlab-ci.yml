@@ -21,7 +21,7 @@ test:
     - curl -sL https://deb.nodesource.com/setup_10.x | bash -
     - apt-get --assume-yes install software-properties-common
     - add-apt-repository ppa:longsleep/golang-backports
-    - apt install golang-go
+    - apt install --assume-yes golang-go
     - apt install -y nodejs
     - go get github.com/go-sql-driver/mysql
     - touch .config
