@@ -16,6 +16,7 @@ stages:
 test:
   stage: test
   script: 
+    - echo "$CONFIG_JSON" > test/config.json
     - apt-get update
     - apt-get upgrade
     - curl -sL https://deb.nodesource.com/setup_10.x | bash -
