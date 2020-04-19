@@ -1,7 +1,30 @@
 image: node:latest
 
+services:
+  - mysql:latest
+
+variables:
+  MYSQL_DATABASE: order_service
+  MYSQL_USER: dilawar
+  MYSQL_ROOT_PASSWORD: passord123
+
 stages:
+  - prepare
+  - test
   - deploy # Jobs placed in build-stage will run last after test-jobs
+
+
+test:
+  stage: test
+  script: 
+    - cd server && npm test
+
+connect:
+  image: mysql
+  stage: prepare
+  script:
+    - service mysql start
+    - echo "CREATE DATABASE wallet_service;" | mysql -u"$MYSQL_USER" -p"$MYSQL_ROOT_PASSWORD" -h mysql "$MYSQL_DATABASE"
 
 
 deploy:
