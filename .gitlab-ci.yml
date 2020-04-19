@@ -25,6 +25,7 @@ test:
     - echo "root:passord123" > .config
     - rm -rf Cargo.lock
     - nohup /bin/bash runservers & 
+    - sleep 3
     - cd test && npm install && npm test
 
 
