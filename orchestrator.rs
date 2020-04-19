@@ -10,18 +10,13 @@ use std::fs;
 extern crate serde;
 extern crate serde_json;
 use serde::{Serialize, Deserialize};
-use serde_json::Result;
 
 const WALLET_MS_PORT: u16 = 3332u16;
 const ORDER_MS_PORT: u16 = 3335u16;
 
 fn main() {
-<<<<<<< HEAD
-    let contents = fs::read_to_string("../../addresses")
-=======
     // IP addresses are of micro services are read from file
     let contents = fs::read_to_string("./addresses")
->>>>>>> 9f21faeff0855e3ce2174ca69a821a8725f7117a
     .expect("Something went wrong reading the file");
     println!("{}",contents);
     let addresses:Vec<&str> = contents.split(" ").collect();
