@@ -6,9 +6,9 @@ variables:
   MYSQL_ROOT_PASSWORD: passord123
 
 services:
-  - name: mysql:latest
+  - name: mysql
     alias: mysql-1
-  - name: mysql:latest
+  - name: mysql
     alias: mysql-2
 
 stages:
