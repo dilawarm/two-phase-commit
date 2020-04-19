@@ -26,6 +26,7 @@ test:
     - go get github.com/go-sql-driver/mysql
     - touch .config
     - echo "root:passord123@tcp(mysql:3306)" > .config
+    - echo ""
     - rm Cargo.lock
     - cargo build
     - nohup /bin/bash runservers &

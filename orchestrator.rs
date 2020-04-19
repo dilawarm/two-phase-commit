@@ -154,7 +154,10 @@ fn handle_request(wallet_ip: &[u8; 4], order_ip: &[u8; 4], account: u32, amount:
             failed = true;
         }
     };
-    match order_stream.write(&items.len().to_be_bytes()) {
+    println!("AMOUNT: {}", &items.len());
+    let mut amountofitems= (&items.len() * 1) as u32;
+
+    match order_stream.write(&amountofitems.to_be_bytes()) {
         Ok(_result) => {}
         Err(e) => {
             println!(

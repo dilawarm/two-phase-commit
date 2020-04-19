@@ -49,7 +49,6 @@ test("valid order", done=>{
         "account":1,
         "amount":100,
         "user_id":1,
-        "amount_of_items":5,
         "items": [1,2,3,4,5]
     }
     fetch("http://localhost:3000/purchase", {
@@ -77,7 +76,6 @@ test("invalid user id", done=>{
         "account":69,
         "amount":100,
         "user_id":1,
-        "amount_of_items":5,
         "items": [1,2,3,4,5]
     }
     fetch("http://localhost:3000/purchase", {
@@ -104,7 +102,6 @@ test("Price is greater than balance", done=>{
         "account":1,
         "amount":10000,
         "user_id":1,
-        "amount_of_items":5,
         "items": [1,2,3,4,5]
     }
     fetch("http://localhost:3000/purchase", {
@@ -125,14 +122,13 @@ test("Price is greater than balance", done=>{
       });
 });
 
-test("too many orders", done=>{
+test("not enough in stock", done=>{
     let orcRes = "";
     const data = {
         "account":1,
-        "amount":10000,
+        "amount":10,
         "user_id":1,
-        "amount_of_items":8,
-        "items": [1,2,3,4,5]
+        "items": [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
     }
     fetch("http://localhost:3000/purchase", {
         method: "POST", 
@@ -144,7 +140,7 @@ test("too many orders", done=>{
       .then(response => response.text())
       .then(data => {
           console.log(data);
-          expect(data).toBe("Amout of items dose not match number of entries in items array");
+          expect(data).toBe("Could not fulfill order");
           done();
       })
       .catch((error) => {
