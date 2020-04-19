@@ -1,4 +1,4 @@
-image: node:latest
+image: golang:latest
 
 variables:
   MYSQL_DATABASE: wallet_service
@@ -18,8 +18,7 @@ install:
   stage: install
   script:
     - apt-get update
-    - tar -C /usr/local -xzf go$VERSION.$OS-$ARCH.tar.gz
-    - export PATH=$PATH:/usr/local/go/bin
+    - apt-get install -y cargo
 
 test:
   stage: test
