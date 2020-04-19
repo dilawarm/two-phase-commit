@@ -1,9 +1,7 @@
 use std::thread;
-use std::io::prelude::*;
 use std::io::{BufRead, BufReader, Read, Write};
 use std::net::{IpAddr, Ipv4Addr, SocketAddr, TcpListener, TcpStream};
 use std::time::Duration;
-use std::time;
 use std::fs;
 
 // Serde is for json support
@@ -41,7 +39,7 @@ fn main() {
                 .name("coordinator".to_string())
                 .spawn(move || {
                     // Reads the http request
-                    let (status, account, amount, user_id, amount_of_items, items) = read_http_request(&stream);
+                    let (status, account, amount, user_id, items) = read_http_request(&stream);
                     if status == 2 {
                         // Json could not be parsed
                         let response = "HTTP/1.1 400 JSON could not be serialized, check syntax\n\n";
@@ -57,16 +55,11 @@ fn main() {
                         let response = "HTTP/1.1 404 Only POST is supported on this endpoint\n\n";
                         stream.write_all(response.as_bytes()).unwrap();
                     }
-                    else if status == 5 {
-                        // Amount of items =/= items.len()
-                        let response = "HTTP/1.1 400\n\nAmout of items dose not match number of entries in items array";
-                        stream.write_all(response.as_bytes()).unwrap();
-                    }
                     else {
                         // If the transaction fails the orchestrator will retry up to 5 times
                         let mut tries = 0;
                         while tries < 5 {
-                            if handle_request(&wallet_ip, &order_ip, account, amount, user_id, amount_of_items, &items, &stream) {
+                            if handle_request(&wallet_ip, &order_ip, account, amount, user_id, &items) {
                                 break;
                             }
                             else {
@@ -92,7 +85,7 @@ fn main() {
     }
 }
 
-fn handle_request(wallet_ip: &[u8; 4], order_ip: &[u8; 4], account: u32, amount:u32, user_id: u32, amount_of_items: u32, items: &Vec<u32>, mut client_stream: &TcpStream) -> bool {
+fn handle_request(wallet_ip: &[u8; 4], order_ip: &[u8; 4], account: u32, amount:u32, user_id: u32, items: &Vec<u32>) -> bool {
     let mut failed = false;
     // TCP connection duration before timeout
     let timeout = Duration::from_millis(5000);
@@ -161,7 +154,7 @@ fn handle_request(wallet_ip: &[u8; 4], order_ip: &[u8; 4], account: u32, amount:
             failed = true;
         }
     };
-    match order_stream.write(&amount_of_items.to_be_bytes()) {
+    match order_stream.write(&items.len().to_be_bytes()) {
         Ok(_result) => {}
         Err(e) => {
             println!(
@@ -172,8 +165,8 @@ fn handle_request(wallet_ip: &[u8; 4], order_ip: &[u8; 4], account: u32, amount:
         }
     };
     
-    for i in 0..amount_of_items {
-        match order_stream.write(&items[i as usize].to_be_bytes()) {
+    for item in items {
+        match order_stream.write(&item.to_be_bytes()) {
             Ok(_result) => {}
             Err(e) => {
                 println!("Failed to write item to order microservice: {}", e);
@@ -326,7 +319,7 @@ fn rollback(mut order_stream: TcpStream, mut wallet_stream: TcpStream) {
     println!("NB: Rollback Failed!");
 }
 
-fn read_http_request(client_stream: &TcpStream) -> (u8, u32, u32, u32, u32, Vec<u32>){
+fn read_http_request(client_stream: &TcpStream) -> (u8, u32, u32, u32, Vec<u32>){
     let mut reader = BufReader::new(client_stream);
 
     // Reads the first line in header in the HTTP request
@@ -367,7 +360,7 @@ fn read_http_request(client_stream: &TcpStream) -> (u8, u32, u32, u32, u32, Vec<
     }
     // If the request isn't a post request we send an error message
     if !has_body {
-        return (4, 0, 0, 0, 0, vec![0]);
+        return (4, 0, 0, 0, vec![0]);
     }
     // We check that the endpoint is correct
     if http_request_definition_split[1] == "/purchase" {
@@ -382,18 +375,14 @@ fn read_http_request(client_stream: &TcpStream) -> (u8, u32, u32, u32, u32, Vec<
             Ok(data) => data,
             Err(e) => {
                 println!("JSON serilization failed: {}", e);
-                return (2, 0,0,0,0, vec![0]);
+                return (2, 0, 0, 0, vec![0]);
             }
         };
-        if order.amount_of_items != order.items.len() as u32 {
-            println!("Amount of items dose not match item array length");
-            return (5, 0, 0, 0, 0, vec![0]);
-        }
         println!("JSON read succesfull");
-        return(1, order.account, order.amount, order.user_id, order.amount_of_items, order.items);
+        return(1, order.account, order.amount, order.user_id, order.items);
     }
     else {
-        return (3, 0, 0, 0, 0, vec![0]);
+        return (3, 0, 0, 0, vec![0]);
     }
 }
 
@@ -403,6 +392,5 @@ struct Order {
     account: u32,
     amount: u32,
     user_id: u32,
-    amount_of_items: u32,
     items: Vec<u32>
 }
