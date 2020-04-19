@@ -41,7 +41,7 @@ afterAll(()=>{
     pool1.end();
     pool2.end();
 });
-/*
+
 
 test("valid order", done=>{
     let orcRes = "";
@@ -69,7 +69,7 @@ test("valid order", done=>{
         console.error('Error:', error);
       });
 });
-
+/*
 test("invalid user id", done=>{
     let orcRes = "";
     const data = {
