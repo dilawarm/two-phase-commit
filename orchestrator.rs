@@ -12,9 +12,7 @@ extern crate serde_json;
 use serde::{Serialize, Deserialize};
 use serde_json::Result;
 
-//const WALLET_MS_IP: [u8; 4] = [10u8, 128u8, 0u8, 9u8]; //35.202.15.128
 const WALLET_MS_PORT: u16 = 3332u16;
-//const ORDER_MS_IP: [u8; 4] = [10u8, 128u8, 0u8, 10u8]; //34.67.42.245
 const ORDER_MS_PORT: u16 = 3335u16;
 
 fn main() {
