@@ -347,7 +347,7 @@ fn read_http_request(client_stream: &TcpStream) -> (u8, u32, u32, u32, Vec<u32>)
         println!("{}", line_uw);
         // We look for the content length header so we know how far to read
         if line_uw.len() > 15 {
-            if &line_uw[..15] == "Content-Length:"{
+            if &String::from(&line_uw).to_lowercase()[..15] == "content-length:"{
                 body = vec![0;(&line_uw[16..]).parse().unwrap()]
             }
         }
