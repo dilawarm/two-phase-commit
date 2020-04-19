@@ -152,12 +152,15 @@ func main() {
 }
 
 func prepareAndCommit(conn net.Conn, password string) {
-	prep := handlePrepare(conn, password) // writes to Coordinator
+	// Attempts to prepear transaction
+	prep := handlePrepare(conn, password)
 	tx := prep.Tx
 	user_id := prep.User_id
 	b := make([]byte, 2)
 	fmt.Println(prep.Id)
 	binary.LittleEndian.PutUint16(b, uint16(prep.Id))
+	// Write status to coordinator
 	conn.Write(b)
+	// Read response from coordinator an handle it
 	micro.HandleCommit(conn, tx, user_id, list, prep.Id)
 }
