@@ -28,7 +28,7 @@ fn main() {
     let wallet_ip: [u8; 4] = [walletnumbers[0].parse::<u8>().unwrap(), walletnumbers[1].parse::<u8>().unwrap(), walletnumbers[2].parse::<u8>().unwrap(), walletnumbers[3].parse::<u8>().unwrap()];
     let order_ip: [u8; 4] = [ordernumbers[0].parse::<u8>().unwrap(), ordernumbers[1].parse::<u8>().unwrap(), ordernumbers[2].parse::<u8>().unwrap(), ordernumbers[3].parse::<u8>().unwrap()];
     println!("{:?}", wallet_ip);
-    println!("{:?}", order_ip);
+        println!("{:?}", order_ip);
 
     // The server listens for http requests on port 3000
     let mut threads = Vec::new();
@@ -234,8 +234,8 @@ fn handle_request(wallet_ip: &[u8; 4], order_ip: &[u8; 4], account: u32, amount:
     if order_response[0] == 1 && wallet_response[0] == 1 {
         println!("Commiting changes");
         let commit_message = 1u32;
-        let wallet_commit_failed = false;
-        let order_commit_failed = false;
+        let mut wallet_commit_failed = false;
+        let mut order_commit_failed = false;
         // Tell microservices to commit. 
         match wallet_stream.write(&commit_message.to_be_bytes()) {
             Ok(_result) => {}
