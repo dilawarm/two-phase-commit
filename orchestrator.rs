@@ -18,7 +18,7 @@ const WALLET_MS_PORT: u16 = 3332u16;
 const ORDER_MS_PORT: u16 = 3335u16;
 
 fn main() {
-    let contents = fs::read_to_string("./addresses")
+    let contents = fs::read_to_string("../../addresses")
     .expect("Something went wrong reading the file");
     println!("{}",contents);
     let addresses:Vec<&str> = contents.split(" ").collect();
