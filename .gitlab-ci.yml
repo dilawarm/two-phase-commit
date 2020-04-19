@@ -20,7 +20,7 @@ install:
     - apt-get update
     - apt-get install -y cargo
     - apt-get install curl
-    - curl -sL https://deb.nodesource.com/setup_10.x | sudo -E bash -
+    - curl -sL https://deb.nodesource.com/setup_10.x | -E bash -
     - apt install nodejs
     - go get github.com/go-sql-driver/mysql
 
