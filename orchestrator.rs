@@ -10,7 +10,6 @@ use std::fs;
 extern crate serde;
 extern crate serde_json;
 use serde::{Serialize, Deserialize};
-use serde_json::Result;
 
 const WALLET_MS_PORT: u16 = 3332u16;
 const ORDER_MS_PORT: u16 = 3335u16;
