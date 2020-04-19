@@ -20,6 +20,8 @@ test:
     - apt-get upgrade
     - curl -sL https://deb.nodesource.com/setup_10.x | bash -
     - apt-get install -y cargo
+    - apt-get update
+    - apt-get upgrade
     - rustc --version
     - apt install -y nodejs
     - go get github.com/go-sql-driver/mysql
