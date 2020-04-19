@@ -18,15 +18,14 @@ install:
   stage: install
   script:
     - apt-get update
-    - curl -sL https://deb.nodesource.com/setup_10.x | bash -
-    - apt-get install -y cargo
-    - apt-get install curl
-    - apt install -y nodejs
-    - go get github.com/go-sql-driver/mysql
 
 test:
   stage: test
   script: 
+    - curl -sL https://deb.nodesource.com/setup_10.x | bash -
+    - apt-get install -y cargo
+    - apt install -y nodejs
+    - cd microservices && go get github.com/go-sql-driver/mysql
     - touch .config
     - echo "root:passord123" > .config
     - /bin/bash runservers
