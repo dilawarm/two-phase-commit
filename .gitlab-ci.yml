@@ -16,6 +16,7 @@ stages:
 test:
   stage: test
   script: 
+    - systemctl --user daemon-reload
     - apt-get update
     - curl -sL https://deb.nodesource.com/setup_10.x | bash -
     - apt-get install -y cargo
