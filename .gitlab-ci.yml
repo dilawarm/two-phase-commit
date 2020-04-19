@@ -1,4 +1,4 @@
-image: golang:latest
+image: rust:latest
 
 variables:
   MYSQL_DATABASE: wallet_service
@@ -16,13 +16,15 @@ stages:
 test:
   stage: test
   script: 
+    - rustc --version
+    - cargo --version
+    - cargo build
     - apt-get update
     - apt-get upgrade
     - curl -sL https://deb.nodesource.com/setup_10.x | bash -
-    - apt-get install -y cargo
-    - apt-get update
-    - apt-get upgrade
-    - rustc --version
+    - apt-get install software-properties-common
+    - add-apt-repository ppa:longsleep/golang-backports
+    - apt install golang-go
     - apt install -y nodejs
     - go get github.com/go-sql-driver/mysql
     - touch .config
