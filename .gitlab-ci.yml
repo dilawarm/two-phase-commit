@@ -2,11 +2,11 @@ image: node:latest
 
 variables:
   MYSQL_DATABASE: wallet_service
-  MYSQL_USER: dilawar
+  MYSQL_USER: root
   MYSQL_ROOT_PASSWORD: passord123
 
 services:
-  - mysql:latest
+  - mysql:5
 
 stages:
   - test
