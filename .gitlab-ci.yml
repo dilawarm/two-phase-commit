@@ -19,7 +19,7 @@ stages:
 test:
   stage: test
   script: 
-    - cd server && npm test
+    - cd server && npm install && npm test
 
 
 deploy:
