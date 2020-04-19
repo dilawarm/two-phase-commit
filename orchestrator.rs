@@ -1,91 +1,107 @@
-use std::thread;
+use std::fs;
 use std::io::{BufRead, BufReader, Read, Write};
 use std::net::{IpAddr, Ipv4Addr, SocketAddr, TcpListener, TcpStream};
+use std::thread;
 use std::time::Duration;
-use std::fs;
 
 // Serde is for json support
 extern crate serde;
 extern crate serde_json;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 const WALLET_MS_PORT: u16 = 3332u16;
 const ORDER_MS_PORT: u16 = 3335u16;
 
 fn main() {
     // IP addresses are of micro services are read from file
-    let contents = fs::read_to_string("./addresses")
-    .expect("Something went wrong reading the file");
-    println!("{}",contents);
-    let addresses:Vec<&str> = contents.split(" ").collect();
+    let contents =
+        fs::read_to_string("./addresses").expect("Something went wrong reading the file");
+    println!("{}", contents);
+    let addresses: Vec<&str> = contents.split(" ").collect();
     let listen: &str = addresses[0];
-    let walletnumbers:Vec<&str> = addresses[1].split(".").collect();
-    let ordernumbers:Vec<&str> = addresses[2].split(".").collect();
+    let walletnumbers: Vec<&str> = addresses[1].split(".").collect();
+    let ordernumbers: Vec<&str> = addresses[2].split(".").collect();
     println!("{}", ordernumbers[0]);
-    let wallet_ip: [u8; 4] = [walletnumbers[0].parse::<u8>().unwrap(), walletnumbers[1].parse::<u8>().unwrap(), walletnumbers[2].parse::<u8>().unwrap(), walletnumbers[3].parse::<u8>().unwrap()];
-    let order_ip: [u8; 4] = [ordernumbers[0].parse::<u8>().unwrap(), ordernumbers[1].parse::<u8>().unwrap(), ordernumbers[2].parse::<u8>().unwrap(), ordernumbers[3].parse::<u8>().unwrap()];
+    let wallet_ip: [u8; 4] = [
+        walletnumbers[0].parse::<u8>().unwrap(),
+        walletnumbers[1].parse::<u8>().unwrap(),
+        walletnumbers[2].parse::<u8>().unwrap(),
+        walletnumbers[3].parse::<u8>().unwrap(),
+    ];
+    let order_ip: [u8; 4] = [
+        ordernumbers[0].parse::<u8>().unwrap(),
+        ordernumbers[1].parse::<u8>().unwrap(),
+        ordernumbers[2].parse::<u8>().unwrap(),
+        ordernumbers[3].parse::<u8>().unwrap(),
+    ];
     println!("{:?}", wallet_ip);
-        println!("{:?}", order_ip);
+    println!("{:?}", order_ip);
 
     // The server listens for http requests on port 3000
     let mut threads = Vec::new();
-    let listener = TcpListener::bind(listen.to_owned()+":3000").unwrap();
+    let listener = TcpListener::bind(listen.to_owned() + ":3000").unwrap();
     for stream in listener.incoming() {
         // Http requests are handled by individual threads
         let mut stream = stream.unwrap();
         {
-        threads.push(
-            thread::Builder::new()
-                .name("coordinator".to_string())
-                .spawn(move || {
-                    // Reads the http request
-                    let (status, account, amount, user_id, items) = read_http_request(&stream);
-                    if status == 2 {
-                        // Json could not be parsed
-                        let response = "HTTP/1.1 400 JSON could not be serialized, check syntax\n\n";
-                        stream.write_all(response.as_bytes()).unwrap();
-                    }
-                    else if status == 3 {
-                        // Request wasn't sent to /purchase endpoint
-                        let response = "HTTP/1.1 404 Endpoint not found\n\n";
-                        stream.write_all(response.as_bytes()).unwrap();
-                    }
-                    else if status == 4 {
-                        // Request wasn't POST request
-                        let response = "HTTP/1.1 404 Only POST is supported on this endpoint\n\n";
-                        stream.write_all(response.as_bytes()).unwrap();
-                    }
-                    else {
-                        // If the transaction fails the orchestrator will retry up to 5 times
-                        let mut tries = 0;
-                        while tries < 5 {
-                            if handle_request(&wallet_ip, &order_ip, account, amount, user_id, &items) {
-                                break;
-                            }
-                            else {
-                                tries += 1;
-                                println!("Failed attempt #{}", tries);
-                            }
-                        }
-                        if tries >= 5 {
-                            // After 5 fails 
-                            let response = "HTTP/1.1 500\n\nCould not fulfill order";
+            threads.push(
+                thread::Builder::new()
+                    .name("coordinator".to_string())
+                    .spawn(move || {
+                        // Reads the http request
+                        let (status, account, amount, user_id, items) = read_http_request(&stream);
+                        if status == 2 {
+                            // Json could not be parsed
+                            let response =
+                                "HTTP/1.1 400 JSON could not be serialized, check syntax\n\n";
                             stream.write_all(response.as_bytes()).unwrap();
-                            println!("Could not fulfilll order");
-                        }
-                        else {
-                            let response = "HTTP/1.1 200 OK\n\nsuccess";
+                        } else if status == 3 {
+                            // Request wasn't sent to /purchase endpoint
+                            let response = "HTTP/1.1 404 Endpoint not found\n\n";
                             stream.write_all(response.as_bytes()).unwrap();
-                            println!("Order fulfilled");
+                        } else if status == 4 {
+                            // Request wasn't POST request
+                            let response =
+                                "HTTP/1.1 404 Only POST is supported on this endpoint\n\n";
+                            stream.write_all(response.as_bytes()).unwrap();
+                        } else {
+                            // If the transaction fails the orchestrator will retry up to 5 times
+                            let mut tries = 0;
+                            while tries < 5 {
+                                if handle_request(
+                                    &wallet_ip, &order_ip, account, amount, user_id, &items,
+                                ) {
+                                    break;
+                                } else {
+                                    tries += 1;
+                                    println!("Failed attempt #{}", tries);
+                                }
+                            }
+                            if tries >= 5 {
+                                // After 5 fails
+                                let response = "HTTP/1.1 500\n\nCould not fulfill order";
+                                stream.write_all(response.as_bytes()).unwrap();
+                                println!("Could not fulfilll order");
+                            } else {
+                                let response = "HTTP/1.1 200 OK\n\nsuccess";
+                                stream.write_all(response.as_bytes()).unwrap();
+                                println!("Order fulfilled");
+                            }
                         }
-                    }
-                }),
-        );
+                    }),
+            );
         }
     }
 }
 
-fn handle_request(wallet_ip: &[u8; 4], order_ip: &[u8; 4], account: u32, amount:u32, user_id: u32, items: &Vec<u32>) -> bool {
+fn handle_request(
+    wallet_ip: &[u8; 4],
+    order_ip: &[u8; 4],
+    account: u32,
+    amount: u32,
+    user_id: u32,
+    items: &Vec<u32>,
+) -> bool {
     let mut failed = false;
     // TCP connection duration before timeout
     let timeout = Duration::from_millis(5000);
@@ -167,7 +183,7 @@ fn handle_request(wallet_ip: &[u8; 4], order_ip: &[u8; 4], account: u32, amount:
             failed = true;
         }
     };
-    
+
     for item in items {
         match order_stream.write(&item.to_be_bytes()) {
             Ok(_result) => {}
@@ -203,19 +219,31 @@ fn handle_request(wallet_ip: &[u8; 4], order_ip: &[u8; 4], account: u32, amount:
     };
 
     // Check if microservices succeded, print cause of error if a microservice fails
-    let response_definitions = ["Error reading data from orchestrator", "OK Prepare", "OK Commit", "User has uncommited transactions", "Could not connect to database", "Could not start transaction", "Error with transaction query", "Transaction rolled back", "Transaction never started", "Error querying from wallet table", "Wrong format on result from wallet table", "User does not exist", "Balance too low"];
+    let response_definitions = [
+        "Error reading data from orchestrator",
+        "OK Prepare",
+        "OK Commit",
+        "User has uncommited transactions",
+        "Could not connect to database",
+        "Could not start transaction",
+        "Error with transaction query",
+        "Transaction rolled back",
+        "Transaction never started",
+        "Error querying from wallet table",
+        "Wrong format on result from wallet table",
+        "User does not exist",
+        "Balance too low",
+    ];
     print!("wallet response: {}", wallet_response[0]);
     if wallet_response[0] < 14 {
         println!(" ({})", response_definitions[wallet_response[0] as usize]);
-    }
-    else {
+    } else {
         println!();
     }
     print!("order response: {}", order_response[0]);
     if order_response[0] < 9 {
         print!(" ({})", response_definitions[order_response[0] as usize]);
-    }
-    else {
+    } else {
         println!();
     }
 
@@ -231,7 +259,7 @@ fn handle_request(wallet_ip: &[u8; 4], order_ip: &[u8; 4], account: u32, amount:
         let commit_message = 1u32;
         let mut wallet_commit_failed = false;
         let mut order_commit_failed = false;
-        // Tell microservices to commit. 
+        // Tell microservices to commit.
         match wallet_stream.write(&commit_message.to_be_bytes()) {
             Ok(_result) => {}
             Err(e) => {
@@ -267,7 +295,7 @@ fn handle_request(wallet_ip: &[u8; 4], order_ip: &[u8; 4], account: u32, amount:
         }
         return true;
     } else {
-        // If one of the microservices failed to prepare the orchestrator will rollback both and retry 
+        // If one of the microservices failed to prepare the orchestrator will rollback both and retry
         rollback(order_stream, wallet_stream);
         return false;
     }
@@ -281,14 +309,14 @@ fn rollback(mut order_stream: TcpStream, mut wallet_stream: TcpStream) {
     // The message 2 tells micro services to rollback
     let rollback_message = 2u32;
     match wallet_stream.write(&rollback_message.to_be_bytes()) {
-        Ok(_result) => { wallet_rolledback = true}
+        Ok(_result) => wallet_rolledback = true,
         Err(e) => {
             println!("Wallet microservice rollback write failed: {}", e);
             fails += 1;
         }
     };
     match order_stream.write(&rollback_message.to_be_bytes()) {
-        Ok(_result) => { order_rolledback = true}
+        Ok(_result) => order_rolledback = true,
         Err(e) => {
             println!("Order microservice rollback write failed: {}", e);
             fails += 1;
@@ -298,7 +326,9 @@ fn rollback(mut order_stream: TcpStream, mut wallet_stream: TcpStream) {
     while fails < 5 {
         if !wallet_rolledback {
             match wallet_stream.write(&rollback_message.to_be_bytes()) {
-                Ok(_result) => { wallet_rolledback = true; }
+                Ok(_result) => {
+                    wallet_rolledback = true;
+                }
                 Err(e) => {
                     println!("Wallet microservice rollback write failed: {}", e);
                     fails += 1;
@@ -307,7 +337,9 @@ fn rollback(mut order_stream: TcpStream, mut wallet_stream: TcpStream) {
         }
         if !order_rolledback {
             match order_stream.write(&rollback_message.to_be_bytes()) {
-                Ok(_result) => { order_rolledback = true; }
+                Ok(_result) => {
+                    order_rolledback = true;
+                }
                 Err(e) => {
                     println!("Order microservice rollback write failed: {}", e);
                     fails += 1;
@@ -322,14 +354,15 @@ fn rollback(mut order_stream: TcpStream, mut wallet_stream: TcpStream) {
     println!("NB: Rollback Failed!");
 }
 
-fn read_http_request(client_stream: &TcpStream) -> (u8, u32, u32, u32, Vec<u32>){
+fn read_http_request(client_stream: &TcpStream) -> (u8, u32, u32, u32, Vec<u32>) {
     let mut reader = BufReader::new(client_stream);
 
     // Reads the first line in header in the HTTP request
     // Expected to be "POST /purchase HTTP/1.1" in this case
     let mut http_request_definition = String::new();
     let _result = reader.by_ref().read_line(&mut http_request_definition);
-    let http_request_definition_split: Vec<&str> = http_request_definition.split_whitespace().collect();
+    let http_request_definition_split: Vec<&str> =
+        http_request_definition.split_whitespace().collect();
     println!("{}", http_request_definition);
 
     // Reads the rest of the headers
@@ -341,19 +374,19 @@ fn read_http_request(client_stream: &TcpStream) -> (u8, u32, u32, u32, Vec<u32>)
     if http_request_definition_split[0] == "POST" {
         has_body = true;
     }
-    let mut body: Vec<u8>  = vec![];
+    let mut body: Vec<u8> = vec![];
     for line in reader.by_ref().lines() {
         let line_uw = line.unwrap();
         println!("{}", line_uw);
         // We look for the content length header so we know how far to read
         if line_uw.len() > 15 {
-            if &String::from(&line_uw).to_lowercase()[..15] == "content-length:"{
-                body = vec![0;(&line_uw[16..]).parse().unwrap()]
+            if &String::from(&line_uw).to_lowercase()[..15] == "content-length:" {
+                body = vec![0; (&line_uw[16..]).parse().unwrap()]
             }
         }
         // If we encounter an empty line it means that the headers are finished
         // If the requset has a body we read more
-        if line_uw == "" { 
+        if line_uw == "" {
             if has_body {
                 let _result = reader.by_ref().read_exact(&mut body);
             }
@@ -373,7 +406,7 @@ fn read_http_request(client_stream: &TcpStream) -> (u8, u32, u32, u32, Vec<u32>)
             body_string.push(byte as char);
         }
         println!("body: {}", body_string);
-        // We parse the text as a JSON object 
+        // We parse the text as a JSON object
         let order: Order = match serde_json::from_str(&body_string[..]) {
             Ok(data) => data,
             Err(e) => {
@@ -382,9 +415,8 @@ fn read_http_request(client_stream: &TcpStream) -> (u8, u32, u32, u32, Vec<u32>)
             }
         };
         println!("JSON read succesfull");
-        return(1, order.account, order.amount, order.user_id, order.items);
-    }
-    else {
+        return (1, order.account, order.amount, order.user_id, order.items);
+    } else {
         return (3, 0, 0, 0, vec![0]);
     }
 }
@@ -395,5 +427,5 @@ struct Order {
     account: u32,
     amount: u32,
     user_id: u32,
-    items: Vec<u32>
+    items: Vec<u32>,
 }
