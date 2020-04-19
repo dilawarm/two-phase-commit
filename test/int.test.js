@@ -12,17 +12,17 @@ console.log(config.user)
 
 var pool1 = mysql.createPool({
     connectionLimit: 1,
-    host: "mysql-1",
+    host: "mysql",
     user: config.user,
     password: config.password,
-    database: "order_service",
+    database: "wallet_service",
     debug: false,
     multipleStatements: true
 });
 
 var pool2 = mysql.createPool({
     connectionLimit: 1,
-    host: "mysql-2",
+    host: "mysql",
     user: config.user,
     password: config.password,
     database: "order_service",
