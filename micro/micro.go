@@ -19,21 +19,20 @@ type List struct {
 	Mux  sync.Mutex
 }
 
-//var PreparedList List l
-
 const CONN_HOST = ""
 const CONN_TYPE = "tcp"
 var ORDER_HOST = "localhost"  //"10.128.0.10"
 var WALLET_HOST = "localhost" //"10.128.0.9"
 
 func HandleCommit(conn net.Conn, tx *sql.Tx, user_id int, list List, prepMessage int) {
-
+	// Read orchestrator response
 	buf := make([]byte, 4)
 	_, err := conn.Read(buf)
 	if err != nil {
 		fmt.Println("Error reading:", err.Error())
 	}
 	list.Mux.Lock()
+	// If the user is in the hashmap it is set to false to free it for other threads
 	if prepMessage != 11 {
 		list.List[user_id] = false
 	}
@@ -42,7 +41,9 @@ func HandleCommit(conn net.Conn, tx *sql.Tx, user_id int, list List, prepMessage
 	data := binary.BigEndian.Uint32(buf[:4])
 	id := int(data)
 	fmt.Println("ID :", id)
+	// Interpret the response
 	if id == 1 {
+		// commit changes
 		err = tx.Commit()
 		if err != nil {
 			b := make([]byte, 2)
@@ -53,6 +54,7 @@ func HandleCommit(conn net.Conn, tx *sql.Tx, user_id int, list List, prepMessage
 		binary.LittleEndian.PutUint16(b, uint16(2)) // 2 =
 		conn.Write(b)
 	} else if tx != nil {
+		// Rollback changes
 		tx.Rollback()
 		fmt.Println("Transaction rolled back")
 		b := make([]byte, 2)
@@ -64,6 +66,5 @@ func HandleCommit(conn net.Conn, tx *sql.Tx, user_id int, list List, prepMessage
 		binary.LittleEndian.PutUint16(b, uint16(8))
 		conn.Write(b)
 	}
-	//time.Sleep(200 * time.Millisecond)
 	conn.Close()
 }

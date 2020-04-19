@@ -24,6 +24,7 @@ type Order struct {
 }
 
 func handlePrepare(conn net.Conn, password string) micro.Prep {
+	// Read user id and amount of items
 	buf := make([]byte, 4)
 	_, err := conn.Read(buf)
 	data := binary.BigEndian.Uint32(buf[:4])
@@ -42,6 +43,7 @@ func handlePrepare(conn net.Conn, password string) micro.Prep {
 
 	items := make(map[int]int)
 
+	// Read items
 	for i := 0; i < amount; i++ {
 		_, err = conn.Read(buf)
 		if err != nil {
@@ -57,6 +59,7 @@ func handlePrepare(conn net.Conn, password string) micro.Prep {
 
 	fmt.Println(user_id, amount)
 	list.Mux.Lock()
+	// Check if the user is busy
 	if list.List[user_id] {
 		fmt.Println("user_id already in list of prepared transactions")
 		list.Mux.Unlock()
@@ -64,6 +67,7 @@ func handlePrepare(conn net.Conn, password string) micro.Prep {
 	}
 	list.List[user_id] = true
 	list.Mux.Unlock()
+	// Connect to DB
 	db, err := sql.Open("mysql", password+"@tcp(localhost:3306)/order_service")
 	if err != nil {
 		return micro.Prep{4, nil, user_id}
@@ -77,6 +81,7 @@ func handlePrepare(conn net.Conn, password string) micro.Prep {
 	}
 
 	for item, count := range items {
+		// Check if stock of items will suffice for the order
 		results, err := db.Query("SELECT amount FROM `items` WHERE item_id=?", item)
 		var total_from_db int
 		for results.Next() {
@@ -92,7 +97,6 @@ func handlePrepare(conn net.Conn, password string) micro.Prep {
 
 		_, err = tx.Exec("UPDATE `items` SET amount = amount - 1  WHERE item_id=?", item)
 		if err != nil {
-			//tx.Rollback() // 8 = Could not lock row
 			return micro.Prep{6, tx, user_id}
 		}
 
@@ -109,7 +113,9 @@ func handlePrepare(conn net.Conn, password string) micro.Prep {
 }
 
 func main() {
+	// Hashmap of users to lock other threads out from modifying the same user
 	list = micro.List{List: make(map[int]bool)}
+	// Read database config
 	data, err := ioutil.ReadFile("../.config")
 	if err != nil {
 		fmt.Println("File reading error", err)
@@ -124,6 +130,7 @@ func main() {
 	}
 	host = strings.Split(string(data), " ")[2]
 	fmt.Println("HOST: ", host)
+	// Listen for incomming requests
 	socket, err := net.Listen(micro.CONN_TYPE, host+":"+CONN_PORT)
 	if err != nil {
 		fmt.Println("Error listening: ", err.Error())
@@ -141,13 +148,11 @@ func main() {
 			os.Exit(1)
 		}
 		go prepareAndCommit(conn, password)
-		//time.Sleep(20 * time.Millisecond)
 	}
 }
 
 func prepareAndCommit(conn net.Conn, password string) {
-	//defer return
-	prep := handlePrepare(conn, password) // skriver her til Coordinator
+	prep := handlePrepare(conn, password) // writes to Coordinator
 	tx := prep.Tx
 	user_id := prep.User_id
 	b := make([]byte, 2)
