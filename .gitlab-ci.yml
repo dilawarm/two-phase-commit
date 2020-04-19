@@ -6,9 +6,9 @@ variables:
   MYSQL_ROOT_PASSWORD: passord123
 
 services:
-  - name: mysql
+  - name: mysql:latest
     alias: mysql-1
-  - name: mysql
+  - name: mysql:latest
     alias: mysql-2
 
 stages:
@@ -19,7 +19,7 @@ stages:
 test:
   stage: test
   script: 
-    - cd server && npm install && npm test
+    - cd test && npm install && npm test
 
 
 deploy:
