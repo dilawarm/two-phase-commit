@@ -9,13 +9,24 @@ services:
   - mysql:5
 
 stages:
+  - install
   - test
   - deploy # Jobs placed in build-stage will run last after test-jobs
 
 
+install:
+  stage: install
+  script:
+    - apt-get update
+    - tar -C /usr/local -xzf go$VERSION.$OS-$ARCH.tar.gz
+    - export PATH=$PATH:/usr/local/go/bin
+
 test:
   stage: test
   script: 
+    - touch .config
+    - echo "root:passord123" > .config
+    - /bin/bash runservers
     - cd test && npm install && npm test
 
 
@@ -30,7 +41,6 @@ deploy:
     - touch ~/.ssh/id_rsa.pub
     - chmod 600 ~/.ssh/id_rsa.pub # Required permission by ssh
     - echo "$SSH_PUBLIC_KEY" > ~/.ssh/id_rsa.pub
-    - apt-get update
     - apt-get install --assume-yes rsync
     - rsync --archive --delete --exclude='.git' --exclude='.config' --exclude='node_modules' . order@34.67.42.245:two-phase-commit
     - ssh order@34.67.42.245 "echo $IP_ADDRESSES  > two-phase-commit/addresses"
