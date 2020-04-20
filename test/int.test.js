@@ -88,7 +88,7 @@ test("invalid user id", done=>{
       .then(response => response.text())
       .then(data => {
           console.log(data);
-          expect(data).toBe("Could not fulfill order");
+          expect(data).toBe("User does not exist");
           done();
       })
       .catch((error) => {

@@ -78,6 +78,13 @@ Vi kunne også ha implementert Kubernetes for å ha et mer skalerbart system, da
 
 ## Installasjonsinstruksjoner
 
-
+1. Installer go og rust
+2. Git clone prosjektet
+3. Installer en lokal mysql database, og lage databasen wallet_service
+4. Kjør sql koden i /test/data-dumps
+5. Kjør go get github.com/go-sql-driver/mysql
+6a. Kjør /bin/bash runservers
+6b. Kjør cargo run, go run /microservices/wallet.go og go run /microservices/order.go
+7. Klienten er nå tilgjengelig på http://127.0.0.1:3000
 
 ## Hvordan teste løsningen
