@@ -72,7 +72,7 @@ fn main() {
                             while tries < 5 {
                                 status_code = handle_request(
                                     &wallet_ip, &order_ip, account, amount, user_id, &items,
-                                ) 
+                                );
                                 if status_code == 1 {
                                     break;
                                 } else {
@@ -96,37 +96,37 @@ fn main() {
                                     "Wrong format on result from wallet table",
                                     "User does not exist",
                                     "Balance too low",
+<<<<<<< HEAD
                                     "Not in stock",
+=======
+                                    "Not in stock"
+>>>>>>> 0650c0141bdf032cbb5328f4258e000870afd27b
                                 ];
-                                if 
-                                let response = String::new();
-                                if status_code > 7 && status_code < 21 {
-                                    response.push("HTTP/1.1 406\n\n");
-                                    response.push(response_definitions[status_code-8]);
+                                let mut response = String::new();
+                                if status_code > 6 && status_code < 21 {
+                                    response.push_str("HTTP/1.1 406\n\n");
+                                    response.push_str(response_definitions[(status_code-7) as usize]);
                                 }
                                 else if status_code == 1 {
-                                    response.push("HTTP/1.1 200 OK\n\nsuccess");
+                                    response.push_str("HTTP/1.1 200 OK\n\nsuccess");
                                 }
                                 else if status_code == 2 {
-                                    response.push("HTTP/1.1 500\n\nFailed to create connection to order micro service");
+                                    response.push_str("HTTP/1.1 500\n\nFailed to create connection to order micro service");
                                 }
                                 else if status_code == 3 {
-                                    response.push("HTTP/1.1 500\n\nFailed to create connection to wallet micro service");
+                                    response.push_str("HTTP/1.1 500\n\nFailed to create connection to wallet micro service");
                                 }
                                 else if status_code == 4 {
-                                    response.push("HTTP/1.1 500\n\nA TCP connection failed unexpectedly");
+                                    response.push_str("HTTP/1.1 500\n\nA TCP connection failed unexpectedly");
                                 }
                                 else if status_code == 5 {
-                                    response.push("HTTP/1.1 500\n\nWallet service failed to commit twice");
+                                    response.push_str("HTTP/1.1 500\n\nWallet service failed to commit twice");
                                 }
                                 else if status_code == 6 {
-                                    response.push("HTTP/1.1 500\n\nOrder service failed to commit twice");
-                                }
-                                else if status_code == 7 {
-                                    response.push("HTTP/1.1 500\n\nUnkown microservice failure");
+                                    response.push_str("HTTP/1.1 500\n\nOrder service failed to commit twice");
                                 }
                                 else {
-                                    response.push("HTTP/1.1 500\n\nUnkown failure");
+                                    response.push_str("HTTP/1.1 500\n\nUnkown failure");
                                 }
                                 
                                 stream.write_all(response.as_bytes()).unwrap();
@@ -307,6 +307,7 @@ fn handle_request(
         "Wrong format on result from wallet table",
         "User does not exist",
         "Balance too low",
+        "Not in stock"
     ];
     print!("wallet response: {}", wallet_response[0]);
     if wallet_response[0] < 14 {
@@ -315,7 +316,7 @@ fn handle_request(
         println!();
     }
     print!("order response: {}", order_response[0]);
-    if order_response[0] < 9 {
+    if order_response[0] < 14 {
         print!(" ({})", response_definitions[order_response[0] as usize]);
     } else {
         println!();
@@ -367,18 +368,15 @@ fn handle_request(
                 }
             };
         }
-        return true;
+        return 1;
     } else {
         // If one of the microservices failed to prepare the orchestrator will rollback both and retry
         rollback(order_stream, wallet_stream);
-        if wallet_response[0] > 1 {
-            return 6 + wallet_response[0]
-        }
-        else if order_response[0] > 1 {
-            return 6 + wallet_response[0]
+        if wallet_response[0] != 1 {
+            return 7 + wallet_response[0];
         }
         else {
-            return 7;
+            return 7 + order_response[0];
         }
     }
 }
