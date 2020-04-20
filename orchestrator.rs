@@ -96,6 +96,7 @@ fn main() {
                                     "Wrong format on result from wallet table",
                                     "User does not exist",
                                     "Balance too low",
+                                    "Not in stock",
                                 ];
                                 if 
                                 let response = String::new();

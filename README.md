@@ -70,7 +70,9 @@ Serverne leser inn forskjellige addresse-filer og config filer som sier noe om h
 
 ## Videre arbeid
 
+Lagd et mer utvidet system for å kunne se mer om hva som ligger i databasen, for eksempel hvor mye saldo en bruker har eller hvor mye det er igjen av et produkt. Dette kunne ha blitt kombinert med flere microservices, men konseptet blir fortsatt helt likt som det vi har satt opp her.
 
+Vi kunne også ha implementert Kubernetes for å ha et mer skalerbart system, da det ofte brukes i kombinasjon med microservices. 
 
 ## Eksempler 
 

@@ -91,7 +91,7 @@ func handlePrepare(conn net.Conn, password string) micro.Prep {
 			}
 			fmt.Println(total_from_db)
 			if total_from_db < count {
-				return micro.Prep{12, tx, user_id}
+				return micro.Prep{13, tx, user_id} // 13 = not in stock
 			}
 		}
 

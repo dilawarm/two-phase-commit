@@ -114,7 +114,7 @@ test("Price is greater than balance", done=>{
       .then(response => response.text())
       .then(data => {
           console.log(data);
-          expect(data).toBe("Could not fulfill order");
+          expect(data).toBe("Balance too low");
           done();
       })
       .catch((error) => {
@@ -140,7 +140,7 @@ test("not enough in stock", done=>{
       .then(response => response.text())
       .then(data => {
           console.log(data);
-          expect(data).toBe("Could not fulfill order");
+          expect(data).toBe("Not in stock");
           done();
       })
       .catch((error) => {

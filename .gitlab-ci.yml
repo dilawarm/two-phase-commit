@@ -16,8 +16,8 @@ test:
     - mysql:5
   stage: test
   script: 
-    - apt-get update
-    - apt-get upgrade
+    - apt-get --assume-yes update
+    - apt-get --assume-yes upgrade
     - curl -sL https://deb.nodesource.com/setup_10.x | bash -
     - apt-get --assume-yes install software-properties-common
     - add-apt-repository ppa:longsleep/golang-backports
