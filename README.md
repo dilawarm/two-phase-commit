@@ -63,7 +63,7 @@ Etter at microservicene har fått svar fra orchestrator (dvs. om de kan committe
 
 Siden to-fase-commit handler mye om å kunne ta imot mange transaksjoner samtidig og sørge for at de går gjennom på riktig måte, har vi valgt å lage en distribuert løsning. For å gjøre dette kjører vi serverne på individuelle virtuelle maskiner. Vi hadde mulighet til å be om virtuelle maskiner fra NTNU, men valgte å gå for google cloud ettersom vi har erfaring med å bruke tjenestene fra før. Google cloud er også gratis å bruke inntil en viss grense. Med google cloud var det også enkelt å tilpasse og sette opp maskinene vi hadde bruk for. Vi satte opp tre virtuelle maskiner, én for hver server. For å sette opp maskinene på en trygg måte valgte vi å sette opp egne brukere på maskinene uten administrator rettigheter, med egne lokale databaser. Istedenfor å laste opp og starte serverne manuelt valgte vi å implementere continous deployment ved hjelp av Gitlab CI/CD. 
 
-![](deploy.png)
+![](images/deploy.png)
 
 Serverne leser inn forskjellige addresse-filer og config filer som sier noe om hvilken ip-addresse de skal høre på og hvilken database de skal koble seg til. I vår gitlab-ci fil forandrer vi automatisk på addressene som brukes og har manuelt lagt inn riktig database-tilkobling i .config filene på de virtuelle maskinene. Dette gjør at vi ikke trenger å tenke på å forandre fra f.eks "localhost" når vi tester lokalt og pusher til git. For å oppdatere filene og restarte serverne på google cloud har vi brukt ssh og nøkkel-variabler som er lagret i gitlab. Docker-executoren bruker ssh for å komme seg inn på google cloud maskinene og rsync for å oppdatere filene som ligger på maskina med det som ligger i git. Til slutt restarter den servicen som kjører serveren til tilhørende maskin. Dette er likt for alle maskinene; orchestrator, wallet og order. Ettersom orchestrator hører på port 3000 og serverer en klient ved http GET-request kan vi aksessere løsningen ved å skrive inn ip-addressen til orchestrator etterfulgt av portnummeret i nettleseren.
 
@@ -76,15 +76,25 @@ Vi kunne også ha implementert Kubernetes for å ha et mer skalerbart system, da
 
 ## Eksempler 
 
+
 ## Installasjonsinstruksjoner
 
 1. Installer go og rust
 2. Git clone prosjektet
-3. Installer en lokal mysql database, og lage databasen wallet_service
+3. Installer en lokal mysql database (f.eks mariadb), og lage databasen wallet_service
 4. Kjør sql koden i /test/data-dumps
-5. Kjør go get github.com/go-sql-driver/mysql
-6a. Kjør /bin/bash runservers
-6b. Kjør cargo run, go run /microservices/wallet.go og go run /microservices/order.go
-7. Klienten er nå tilgjengelig på http://127.0.0.1:3000
+5. Lag en fil som heter ".config" ytterst i filstrukturen
+6. Skriv "<database_brukernavn>:<database_passord>@tcp(localhost:3306)" inni .config
+7. Skriv "go get github.com/go-sql-driver/mysql" i terminalen
+__Gjør enten 8 eller 9__
+8. Kjør /bin/bash runservers
+9. Kjør cargo run, go run /microservices/wallet.go og go run /microservices/order.go
+10. Klienten er nå tilgjengelig på http://127.0.0.1:3000
 
 ## Hvordan teste løsningen
+
+Løsningen vår blir testet automatisk med CI/CD. Et eksempel på en velllykket pipeline er ... . Dere kan også teste løsningen vår på http://35.223.240.171:3000/. Her brukes serverne på Google Cloud, så denne lenken brukes for å teste skyløsningen vår. Dere kan også kjøre tester lokalt på følgende måte:
+1. cd test && npm install
+2. Endre host, username og password i config.json slik at passer databasen dere har satt opp.
+3. Kjør serverne (se punkt 8 eller 9 i __Installasjonsinstruksjoner__)
+4. npm test

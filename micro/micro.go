@@ -33,7 +33,7 @@ func HandleCommit(conn net.Conn, tx *sql.Tx, user_id int, list List, prepMessage
 	}
 	list.Mux.Lock()
 	// If the user is in the hashmap it is set to false to free it for other threads
-	if prepMessage != 11 {
+	if prepMessage != 3 {
 		list.List[user_id] = false
 	}
 	list.Mux.Unlock()

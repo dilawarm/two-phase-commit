@@ -30,14 +30,12 @@ func handlePrepare(conn net.Conn, password string) micro.Prep {
 	data := binary.BigEndian.Uint32(buf[:4])
 	user_id := int(data)
 	if err != nil {
-		fmt.Println("Error reading:", err.Error())
 		return micro.Prep{0, nil, 0} // Error reading data
 	}
 	_, err = conn.Read(buf)
 	data = binary.BigEndian.Uint32(buf[:4])
 	amount := int(data)
 	if err != nil {
-		fmt.Println("Error reading:", err.Error())
 		return micro.Prep{0, nil, 0} // Error reading datas
 	}
 
@@ -47,7 +45,6 @@ func handlePrepare(conn net.Conn, password string) micro.Prep {
 	for i := 0; i < amount; i++ {
 		_, err = conn.Read(buf)
 		if err != nil {
-			fmt.Println("Error reading:", err.Error())
 			return micro.Prep{0, nil, 0} // Error reading datas
 		}
 		data = binary.BigEndian.Uint32(buf[:4])
@@ -55,13 +52,10 @@ func handlePrepare(conn net.Conn, password string) micro.Prep {
 		items[item]++
 	}
 
-	fmt.Println(items)
 
-	fmt.Println(user_id, amount)
 	list.Mux.Lock()
 	// Check if the user is busy
 	if list.List[user_id] {
-		fmt.Println("user_id already in list of prepared transactions")
 		list.Mux.Unlock()
 		return micro.Prep{3, nil, user_id}
 	}
@@ -76,7 +70,6 @@ func handlePrepare(conn net.Conn, password string) micro.Prep {
 
 	tx, err := db.Begin()
 	if err != nil { //7 = could not start transaction
-		fmt.Println(err)
 		return micro.Prep{5, tx, user_id}
 	}
 
@@ -89,7 +82,6 @@ func handlePrepare(conn net.Conn, password string) micro.Prep {
 			if err != nil {
 				return micro.Prep{10, tx, user_id} //
 			}
-			fmt.Println(total_from_db)
 			if total_from_db < count {
 				return micro.Prep{13, tx, user_id} // 13 = not in stock
 			}
@@ -118,33 +110,27 @@ func main() {
 	// Read database config
 	data, err := ioutil.ReadFile("../.config")
 	if err != nil {
-		fmt.Println("File reading error", err)
 		os.Exit(1)
 	}
 	password := strings.TrimSpace(string(data))
 
 	data, err = ioutil.ReadFile("../addresses")
 	if err != nil {
-		fmt.Println("File reading error", err)
 		os.Exit(1)
 	}
 	host = strings.Split(string(data), " ")[2]
-	fmt.Println("HOST: ", host)
 	// Listen for incomming requests
 	socket, err := net.Listen(micro.CONN_TYPE, host+":"+CONN_PORT)
 	if err != nil {
-		fmt.Println("Error listening: ", err.Error())
 		os.Exit(1)
 	}
 	defer socket.Close()
 	fmt.Println("Listening on " + host + ":" + CONN_PORT)
 
 	for {
-		fmt.Println("started new connection")
 
 		conn, err := socket.Accept()
 		if err != nil {
-			fmt.Println("Error accepting: ", err.Error())
 			os.Exit(1)
 		}
 		go prepareAndCommit(conn, password)
@@ -152,12 +138,11 @@ func main() {
 }
 
 func prepareAndCommit(conn net.Conn, password string) {
-	// Attempts to prepear transaction
+	// Attempts to prepare transaction
 	prep := handlePrepare(conn, password)
 	tx := prep.Tx
 	user_id := prep.User_id
 	b := make([]byte, 2)
-	fmt.Println(prep.Id)
 	binary.LittleEndian.PutUint16(b, uint16(prep.Id))
 	// Write status to coordinator
 	conn.Write(b)
