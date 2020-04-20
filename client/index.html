@@ -40,26 +40,29 @@
 <script>
     let items = [];
     let price = 0;
+    let outputText = "";
 
 
     function add(){
-    let select = document.getElementById("items");
-    let chosenitem = select.options[select.selectedIndex].value;
-    let currentprice = select.options[select.selectedIndex].innerHTML.split(":")[1].trim();
-    let amount = document.getElementById("amount");
-    if(amount>0){
-        for (let i = 0; i<amount; i++){
-            items.push(chosenitem);
-            price += currentprice;
+        let select = document.getElementById("items");
+        let chosenitem = parseInt(select.options[select.selectedIndex].value);
+        let currentprice = parseInt(select.options[select.selectedIndex].innerHTML.split(":")[1].trim());
+        let amount = parseInt(document.getElementById("amount").value);
+        if(amount>0){
+            for (let i = 0; i<amount; i++){
+                items.push(chosenitem);
+                price += currentprice;
+            }
+            outputText += select.options[select.selectedIndex].innerHTML.split(",")[0] + " x " + amount + "\n";
+            document.getElementById("listofitems").innerText = outputText;
         }
     }
-    console.log(price);
-
-
-    console.log(user_id);
-    }
 function send(){
-    let user_id = document.getElementById("user_id").value;
+    let user_id = parseInt(document.getElementById("user_id").value);
+
+    console.log("USER ID = ", user_id);
+    console.log("AMOUNT = ", price);
+    console.log("ITEMS = ", items);
 
     let data = {
         "user_id": user_id,
@@ -68,7 +71,7 @@ function send(){
         "items": items
     }
     
-    fetch("http://localhost:3000/purchase", {
+    fetch("http://35.223.240.171:3000/purchase", {
       method: "POST",
       headers: {
           'Content-Type': 'application/json',

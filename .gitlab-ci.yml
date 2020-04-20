@@ -3,10 +3,8 @@ image: rust:latest
 variables:
   MYSQL_DATABASE: wallet_service
   MYSQL_USER: root
-  MYSQL_ROOT_PASSWORD: passord123
+  MYSQL_ROOT_PASSWORD: secret
 
-services:
-  - mysql:5
 
 stages:
   - test
@@ -14,6 +12,8 @@ stages:
 
 
 test:
+  services:
+    - mysql:5
   stage: test
   script: 
     - apt-get update
@@ -25,7 +25,7 @@ test:
     - apt install -y nodejs
     - go get github.com/go-sql-driver/mysql
     - touch .config
-    - echo "root:passord123@tcp(mysql:3306)" > .config
+    - echo "root:secret@tcp(mysql:3306)" > .config
     - rm Cargo.lock
     - cargo build
     - nohup /bin/bash runservers &

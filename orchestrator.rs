@@ -68,10 +68,12 @@ fn main() {
                         else if status == 1 {
                             // If the transaction fails the orchestrator will retry up to 5 times
                             let mut tries = 0;
+                            let mut status_code = 0;
                             while tries < 5 {
-                                if handle_request(
+                                status_code = handle_request(
                                     &wallet_ip, &order_ip, account, amount, user_id, &items,
-                                ) {
+                                ) 
+                                if status_code == 1 {
                                     break;
                                 } else {
                                     tries += 1;
@@ -79,8 +81,53 @@ fn main() {
                                 }
                             }
                             if tries >= 5 {
-                                // After 5 fails
-                                let response = "HTTP/1.1 500\n\nCould not fulfill order";
+                                // After 5 fails we accept defeat and return an error message
+                                let response_definitions = [
+                                    "Error reading data from orchestrator",
+                                    "OK Prepare",
+                                    "OK Commit",
+                                    "User has uncommited transactions",
+                                    "Could not connect to database",
+                                    "Could not start transaction",
+                                    "Error with transaction query",
+                                    "Transaction rolled back",
+                                    "Transaction never started",
+                                    "Error querying from wallet table",
+                                    "Wrong format on result from wallet table",
+                                    "User does not exist",
+                                    "Balance too low",
+                                ];
+                                if 
+                                let response = String::new();
+                                if status_code > 7 && status_code < 21 {
+                                    response.push("HTTP/1.1 406\n\n");
+                                    response.push(response_definitions[status_code-8]);
+                                }
+                                else if status_code == 1 {
+                                    response.push("HTTP/1.1 200 OK\n\nsuccess");
+                                }
+                                else if status_code == 2 {
+                                    response.push("HTTP/1.1 500\n\nFailed to create connection to order micro service");
+                                }
+                                else if status_code == 3 {
+                                    response.push("HTTP/1.1 500\n\nFailed to create connection to wallet micro service");
+                                }
+                                else if status_code == 4 {
+                                    response.push("HTTP/1.1 500\n\nA TCP connection failed unexpectedly");
+                                }
+                                else if status_code == 5 {
+                                    response.push("HTTP/1.1 500\n\nWallet service failed to commit twice");
+                                }
+                                else if status_code == 6 {
+                                    response.push("HTTP/1.1 500\n\nOrder service failed to commit twice");
+                                }
+                                else if status_code == 7 {
+                                    response.push("HTTP/1.1 500\n\nUnkown microservice failure");
+                                }
+                                else {
+                                    response.push("HTTP/1.1 500\n\nUnkown failure");
+                                }
+                                
                                 stream.write_all(response.as_bytes()).unwrap();
                                 println!("Could not fulfilll order");
                             } else {
@@ -110,7 +157,6 @@ fn send_file(mut stream: TcpStream, file_name: &str){
         }
     };
     let _result = file.read_to_end(&mut file_bytes_vec);
-    //let temp = &file_bytes_vec; // b: &Vec<u8>
     let file_bytes: &[u8] = &file_bytes_vec;
     match stream.write_all(file_bytes) {
         Ok(_result) => {},
@@ -128,7 +174,7 @@ fn handle_request(
     amount: u32,
     user_id: u32,
     items: &Vec<u32>,
-) -> bool {
+) -> u8 {
     let mut failed = false;
     // TCP connection duration before timeout
     let timeout = Duration::from_millis(5000);
@@ -158,7 +204,7 @@ fn handle_request(
         Ok(stream) => stream,
         Err(e) => {
             println!("Failed to create connection to order micro service: {}", e);
-            return false;
+            return 2;
         }
     };
 
@@ -166,7 +212,7 @@ fn handle_request(
         Ok(stream) => stream,
         Err(e) => {
             println!("Failed to create connection to wallet micro service: {}", e);
-            return false;
+            return 3;
         }
     };
 
@@ -277,7 +323,7 @@ fn handle_request(
     // If any of the TCP read/writes failed it will roll back
     if failed {
         rollback(order_stream, wallet_stream);
-        return false;
+        return 4;
     }
 
     // The microservices respond with 1 if they are ready to commit
@@ -300,7 +346,7 @@ fn handle_request(
                 Ok(_result) => {}
                 Err(e) => {
                     println!("NB! Wallet service failed to commit twice. Contact system administrator. Error: {}", e);
-                    return false;
+                    return 5;
                 }
             };
         }
@@ -316,7 +362,7 @@ fn handle_request(
                 Ok(_result) => {}
                 Err(e) => {
                     println!("NB! Order service failed to commit twice. Contact system administrator. Error: {}", e);
-                    return false;
+                    return 6;
                 }
             };
         }
@@ -324,7 +370,15 @@ fn handle_request(
     } else {
         // If one of the microservices failed to prepare the orchestrator will rollback both and retry
         rollback(order_stream, wallet_stream);
-        return false;
+        if wallet_response[0] > 1 {
+            return 6 + wallet_response[0]
+        }
+        else if order_response[0] > 1 {
+            return 6 + wallet_response[0]
+        }
+        else {
+            return 7;
+        }
     }
 }
 
