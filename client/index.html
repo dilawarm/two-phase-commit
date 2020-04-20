@@ -1,1 +1,90 @@
-<h1>hello</h1>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Client</title>
+  <base href="/">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+</head>
+<body>
+    <h1>Client</h1>
+<h1>Your user ID: </h1>
+<input id = "user_id" type = "number">
+<br>
+<br>
+<br>
+
+<h1>Select product</h1>
+<select id = "items">
+  <option value = "1">carrot, price : 10</option>
+  <option value = "2">computer, price : 100</option>
+  <option value = "3">bitmask, price : 1010</option>
+  <option value = "4">potato, price : 10</option>
+  <option value = "5">server, price: 1000</option>
+  <option value = "6">compiler, price : 21</option>
+</select>
+<br>
+<h1>Select amount</h1>
+<input type = "number" id = "amount">
+
+<button type = "button" onclick="add()">Add item</button>
+<p id = "listofitems"></p>
+
+<button type = "button" onclick="send()">Order</button>
+
+<h2>Output from servers: </h2>
+<p id = "output"></p>  
+</body>
+
+<script>
+    let items = [];
+    let price = 0;
+
+
+    function add(){
+    let select = document.getElementById("items");
+    let chosenitem = select.options[select.selectedIndex].value;
+    let currentprice = select.options[select.selectedIndex].innerHTML.split(":")[1].trim();
+    let amount = document.getElementById("amount");
+    if(amount>0){
+        for (let i = 0; i<amount; i++){
+            items.push(chosenitem);
+            price += currentprice;
+        }
+    }
+    console.log(price);
+
+
+    console.log(user_id);
+    }
+function send(){
+    let user_id = document.getElementById("user_id").value;
+
+    let data = {
+        "user_id": user_id,
+        "account": user_id,
+        "amount": price,
+        "items": items
+    }
+    
+    fetch("http://localhost:3000/purchase", {
+      method: "POST",
+      headers: {
+          'Content-Type': 'application/json',
+        },
+      body: JSON.stringify(data),
+    })
+    .then(response => response.text())
+    .then(data => {
+        console.log(data);
+        let output = document.getElementById("output");
+        output.innerText = data;
+    })
+    .catch((error) => {
+      console.error('Error:', error);
+    });
+}
+    
+</script>
+</html>
