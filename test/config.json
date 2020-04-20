@@ -1,5 +1,5 @@
 {
 	"host": "mysql",
 	"user": "root",
-	"password": "passord123"
+	"password": "secret"
 }
