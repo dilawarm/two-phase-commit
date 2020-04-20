@@ -96,6 +96,7 @@ fn main() {
                                     "Wrong format on result from wallet table",
                                     "User does not exist",
                                     "Balance too low",
+                                    "Not in stock"
                                 ];
                                 let mut response = String::new();
                                 if status_code > 6 && status_code < 21 {
@@ -302,9 +303,10 @@ fn handle_request(
         "Wrong format on result from wallet table",
         "User does not exist",
         "Balance too low",
+        "Not in stock"
     ];
     print!("wallet response: {}", wallet_response[0]);
-    if wallet_response[0] < 14 {
+    if wallet_response[0] < 15 {
         println!(" ({})", response_definitions[wallet_response[0] as usize]);
     } else {
         println!();
