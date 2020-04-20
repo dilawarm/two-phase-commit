@@ -96,11 +96,7 @@ fn main() {
                                     "Wrong format on result from wallet table",
                                     "User does not exist",
                                     "Balance too low",
-<<<<<<< HEAD
-                                    "Not in stock",
-=======
                                     "Not in stock"
->>>>>>> 0650c0141bdf032cbb5328f4258e000870afd27b
                                 ];
                                 let mut response = String::new();
                                 if status_code > 6 && status_code < 21 {
