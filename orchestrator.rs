@@ -306,13 +306,13 @@ fn handle_request(
         "Not in stock"
     ];
     print!("wallet response: {}", wallet_response[0]);
-    if wallet_response[0] < 15 {
+    if wallet_response[0] < 14 {
         println!(" ({})", response_definitions[wallet_response[0] as usize]);
     } else {
         println!();
     }
     print!("order response: {}", order_response[0]);
-    if order_response[0] < 9 {
+    if order_response[0] < 14 {
         print!(" ({})", response_definitions[order_response[0] as usize]);
     } else {
         println!();
