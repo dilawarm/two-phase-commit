@@ -5,8 +5,6 @@ variables:
   MYSQL_USER: root
   MYSQL_ROOT_PASSWORD: passord123
 
-services:
-  - mysql:5
 
 stages:
   - test
@@ -14,6 +12,8 @@ stages:
 
 
 test:
+  services:
+    - mysql:5
   stage: test
   script: 
     - apt-get update
