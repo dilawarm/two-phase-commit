@@ -40,7 +40,6 @@ func HandleCommit(conn net.Conn, tx *sql.Tx, user_id int, list List, prepMessage
 
 	data := binary.BigEndian.Uint32(buf[:4])
 	id := int(data)
-	fmt.Println("ID :", id)
 	// Interpret the response
 	if id == 1 {
 		// commit changes
@@ -56,12 +55,10 @@ func HandleCommit(conn net.Conn, tx *sql.Tx, user_id int, list List, prepMessage
 	} else if tx != nil {
 		// Rollback changes
 		tx.Rollback()
-		fmt.Println("Transaction rolled back")
 		b := make([]byte, 2)
 		binary.LittleEndian.PutUint16(b, uint16(7))
 		conn.Write(b)
 	} else {
-		fmt.Println("do nothing, transaction never started")
 		b := make([]byte, 2)
 		binary.LittleEndian.PutUint16(b, uint16(8))
 		conn.Write(b)
