@@ -98,9 +98,9 @@ fn main() {
                                     "Balance too low",
                                 ];
                                 let mut response = String::new();
-                                if status_code > 7 && status_code < 21 {
+                                if status_code > 6 && status_code < 21 {
                                     response.push_str("HTTP/1.1 406\n\n");
-                                    response.push_str(response_definitions[(status_code-8) as usize]);
+                                    response.push_str(response_definitions[(status_code-7) as usize]);
                                 }
                                 else if status_code == 1 {
                                     response.push_str("HTTP/1.1 200 OK\n\nsuccess");
@@ -119,9 +119,6 @@ fn main() {
                                 }
                                 else if status_code == 6 {
                                     response.push_str("HTTP/1.1 500\n\nOrder service failed to commit twice");
-                                }
-                                else if status_code == 7 {
-                                    response.push_str("HTTP/1.1 500\n\nUnkown microservice failure");
                                 }
                                 else {
                                     response.push_str("HTTP/1.1 500\n\nUnkown failure");
@@ -369,14 +366,11 @@ fn handle_request(
     } else {
         // If one of the microservices failed to prepare the orchestrator will rollback both and retry
         rollback(order_stream, wallet_stream);
-        if wallet_response[0] > 1 {
-            return 6 + wallet_response[0]
-        }
-        else if order_response[0] > 1 {
-            return 6 + wallet_response[0]
+        if wallet_response[0] != 1 {
+            return 7 + wallet_response[0];
         }
         else {
-            return 7;
+            return 7 + order_response[0];
         }
     }
 }
