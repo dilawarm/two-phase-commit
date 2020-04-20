@@ -56,15 +56,16 @@ fn main() {
                                 "HTTP/1.1 400 JSON could not be serialized, check syntax\n\n";
                             stream.write_all(response.as_bytes()).unwrap();
                         } else if status == 3 {
-                            // Request wasn't sent to /purchase endpoint
+                            // Request wasn't sent to recognized endpoint
                             let response = "HTTP/1.1 404 Endpoint not found\n\n";
                             stream.write_all(response.as_bytes()).unwrap();
                         } else if status == 4 {
-                            // Request wasn't POST request
-                            let response =
-                                "HTTP/1.1 404 Only POST is supported on this endpoint\n\n";
-                            stream.write_all(response.as_bytes()).unwrap();
-                        } else {
+                            send_file(stream, "client/index.html");
+                        }
+                        else if status == 5 {
+                            send_file(stream, "client/rust-logo.png");
+                        } 
+                        else if status == 1 {
                             // If the transaction fails the orchestrator will retry up to 5 times
                             let mut tries = 0;
                             while tries < 5 {
@@ -92,6 +93,32 @@ fn main() {
             );
         }
     }
+}
+
+fn send_file(mut stream: TcpStream, file_name: &str){
+    let mut file_bytes_vec: Vec<u8> = Vec::new();
+    let response = "HTTP/1.1 200 OK\n\n";
+    for byte in response.as_bytes() {
+        file_bytes_vec.push(*byte);
+    }
+
+    let mut file = match fs::File::open(file_name) {
+        Ok(file) => file,
+        Err(e) => {
+            println!("Failed to read file: {}", e);
+            return;
+        }
+    };
+    let _result = file.read_to_end(&mut file_bytes_vec);
+    //let temp = &file_bytes_vec; // b: &Vec<u8>
+    let file_bytes: &[u8] = &file_bytes_vec;
+    match stream.write_all(file_bytes) {
+        Ok(_result) => {},
+        Err(e) => {
+            println!("Failed to write file to TCP stream: {}", e);
+            return;
+        }
+    };
 }
 
 fn handle_request(
@@ -394,9 +421,18 @@ fn read_http_request(client_stream: &TcpStream) -> (u8, u32, u32, u32, Vec<u32>)
         }
         http_request_headers.push(line_uw);
     }
+    // If the request is GET / we return the index.html client
+    if http_request_definition_split[0] == "GET" {
+        if http_request_definition_split[1] == "/" {
+            return (4, 0, 0, 0, vec![0]);
+        }
+        else if http_request_definition_split[1] == "/favicon.ico" {
+            return (5, 0, 0, 0, vec![0]);
+        }
+    }
     // If the request isn't a post request we send an error message
     if !has_body {
-        return (4, 0, 0, 0, vec![0]);
+        return (3, 0, 0, 0, vec![0]);
     }
     // We check that the endpoint is correct
     if http_request_definition_split[1] == "/purchase" {
