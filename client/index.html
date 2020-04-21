@@ -91,6 +91,7 @@
         let chosenitem = parseInt(select.options[select.selectedIndex].value);
         let currentprice = parseInt(select.options[select.selectedIndex].innerHTML.split(":")[1].trim());
         let amount = parseInt(document.getElementById("amount").value);
+        console.log(chosenitem);
         if(amount>0){
             for (let i = 0; i<amount; i++){
                 items.push(chosenitem);
@@ -110,7 +111,8 @@ function send(){
         "amount": price,
         "items": items
     }
-    fetch("http://35.223.240.171:3000/purchase", {
+    console.log(items);
+    fetch("http://localhost:3000/purchase", {
       method: "POST",
       headers: {
           'Content-Type': 'application/json',
@@ -119,21 +121,22 @@ function send(){
     })
     .then(response => response.text())
     .then(data => {
+        price = 0;
+        items = [];
         outputText = "";
         let output = document.getElementById("output");
         output.innerText = data;
         document.getElementById("user_id").value = "";
         document.getElementById("amount").value = "";
         let select = document.getElementById("items");
-        select.options[select.selectedIndex].value = "";
+        let chosenitem = select.options[select.selectedIndex].value;
+        select.options[select.selectedIndex].value = chosenitem;
         document.getElementById("listofitems").innerText = "";
         document.getElementById("totalprice").innerText = 0 + ",-";
     })
     .catch((error) => {
       console.error('Error:', error);
     });
-    price = 0;
-    items = [];
 }
     
 </script>

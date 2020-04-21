@@ -1,5 +1,12 @@
 # Two-Phase-Commit
 [Lenke til Continious Integration Løsning](https://gitlab.stud.idi.ntnu.no/dilawarm/two-phase-commit)
+
+## Forfattere
+
+* Emir Derouiche
+* Dilawar Mahmood
+* Håvard Stavnås Markhus
+ 
 ## Introduksjon
 Dette prosjektet har blitt gjennomført som en del nettverksprogrammeringsdelen av emnet TDAT2003.
 
@@ -77,7 +84,7 @@ Vi kunne også ha implementert Kubernetes for å ha et mer skalerbart system, da
 ## Eksempler 
 Ved kjøring av serverne lokalt har vi mulighet til å åpne klienten som er servert av orchestrator lokalt på http://localhost:3000
 
-![](images/potato_client)
+![](images/potato_client.png)
 
 Her sender vi en forespørsel for bruker med bruker-id 1 og bestiller 5 poteter. dette sendes som en post-request til orchestrator på port 3000:
 
