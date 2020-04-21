@@ -77,23 +77,45 @@ Vi kunne også ha implementert Kubernetes for å ha et mer skalerbart system, da
 ## Eksempler 
 Ved kjøring av serverne lokalt har vi mulighet til å åpne klienten som er servert av orchestrator lokalt på http://localhost:3000
 
-![]()
+![]()SETT INN BILDE AV POTETBESTILLING I KLIET HER
 
-Her sender vi en forespørsel for bruker med bruker-id 1 og bestiller 5 poteter. dette sendes som en post-request til o
+Her sender vi en forespørsel for bruker med bruker-id 1 og bestiller 5 poteter. dette sendes som en post-request til orchestrator på port 3000:
+
+![](images/tcpPort3000succesful.png)
+
+Her blir en tcp-connection mellom klient og orchestrator opprettet (linje 1-3) før en Post-request (på linje 4) blir sendt. Post requesten inneholder det vi sendte via nettsiden. Etter mange tcp pakker er sendt frem og tilbake mellom orchestrator og servicene sendes det en respons fra orchestrator til klient med status 200
 
 ## Installasjonsinstruksjoner
-
-1. Installer go og rust
-2. Git clone prosjektet
-3. Installer en lokal mysql database (f.eks mariadb), og lage databasen wallet_service
-4. Kjør sql koden i /test/data-dumps
-5. Lag en fil som heter ".config" ytterst i filstrukturen
-6. Skriv "<database_brukernavn>:<database_passord>@tcp(localhost:3306)" inni .config
-7. Skriv "go get github.com/go-sql-driver/mysql" i terminalen
+1. Installer Golang og Rust
+```
+git clone https://gitlab.stud.idi.ntnu.no/dilawarm/two-phase-commit.git
+cd two-phase-commit
+```
+2. Installer en lokal mysql database (f.eks mariadb), og lag en database som heter `wallet_service`
+```
+cd test/data-dumps
+mysql -u <database_brukernavn> -p wallet_service < wallet-dump.sql
+mysql -u <database_brukernavn> -p order_service < order-dump.sql
+cd ../..
+touch .config
+echo "<database_brukernavn>:<database_passord>@tcp(localhost:3306)" > .config
+go get github.com/go-sql-driver/mysql
+```
 __Gjør enten 8 eller 9__
-8. Kjør /bin/bash runservers
-9. Kjør cargo run, go run /microservices/wallet.go og go run /microservices/order.go
+
+8.
+```
+/bin/bash runservers
+```
+
+9.
+```
+go run microservices/order.go
+go run microservices/wallet.go
+cargo run
+```
 10. Klienten er nå tilgjengelig på http://127.0.0.1:3000
+
 
 ## Hvordan teste løsningen
 
