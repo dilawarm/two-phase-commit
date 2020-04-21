@@ -75,26 +75,89 @@ Lagd et mer utvidet system for å kunne se mer om hva som ligger i databasen, fo
 Vi kunne også ha implementert Kubernetes for å ha et mer skalerbart system, da det ofte brukes i kombinasjon med microservices. 
 
 ## Eksempler 
+Ved kjøring av serverne lokalt har vi mulighet til å åpne klienten som er servert av orchestrator lokalt på http://localhost:3000
 
+![](images/potato_client)
+
+Her sender vi en forespørsel for bruker med bruker-id 1 og bestiller 5 poteter. dette sendes som en post-request til orchestrator på port 3000:
+
+![](images/tcpPort3000succesful.png)
+
+Her blir en tcp-connection mellom klient og orchestrator opprettet (linje 1-3) før en Post-request (på linje 4) blir sendt. Post requesten inneholder det vi sendte via nettsiden. Etter mange tcp pakker er sendt frem og tilbake mellom orchestrator og servicene sendes det en respons fra orchestrator til klient med status 200 og en melding "success"
+
+![](images/httpSuccess.png)
+
+Mellom linje 5 og 99 skjer det mye kommunikasjon mellom orchestrator og servicene. orchestrator oppretter en koordinator for transaksjonen og denne koordinatoren kommuniserer videre med microservicene. Kanalen det skjer mest på er port 3335, som er porten til order. Under ser vi kommunikasjonen mellom koordinatoren og order via tcp
+
+![](images/tcpPort3335succesful.png)
+
+Grunnen til at det er så mange meldinger, er fordi order mottar en melding for hvert produkt som blir bestilt. 
+
+for wallet skjer kommunikasjonen med koordinatoren på port 3332 og ved denne transaksjonen ser den slik ut: 
+
+![](images/tcpPort3332succesful.png)
+
+her er det mindre meldinger ettersom wallet ved enhver transaksjon kun mottar to tall; en for bruker-id og en for prisen på transaksjonen. etter at disse tallene er sendt svarer wallet med "OK PREPARE" og mottar senere fra koordinatoren "OK COMMIT" som betyr at den fullfører transaksjonen. samme prosedyre skjer også på order samtidig. 
+
+Under hele transaksjonen blir utskriften på orchestrator slik:
+
+![](images/5potatoes.png)
+
+Første linje er selve JSON-dataen orchestrator mottar fra klient. På fjerde linje ser vi tallet microservicene svarer med. Ettersom transaksjonen var vellykket og alt er i orden svarer begge servicene med tallet 1, som betyr "OK PREPARE". Da ber koordinatoren begge servicene om å commite transaksjonen og sender til slutt svarmelding til klienten om at transaksjonen var vellykket. 
+
+Ved forsøk på å gjøre en transaksjon på en bruker som ikke eksisterer vil utskriften for orchestrator se slik ut: 
+
+![](images/userDoesNotExist.png)
+
+Her har vi gjort samme transaksjon, bare med en annen bruker-id som ikke eksisterer i "wallet" databasen. Når en transaksjon feiler prøver orchestrator å gjøre transaksjonen på nytt opptil 5 ganger før den sier ifra om at den ikke kan utføre transaksjonen. 
+På forsøk nummer 3 ser vi at order også sier at brukeren har "uncommited transactions". Dette er fordi den prøver på nytt raskt med en ny koordinator før den forrige transaksjonen ble helt avsluttet i microservicen. 
 
 ## Installasjonsinstruksjoner
-
-1. Installer go og rust
-2. Git clone prosjektet
-3. Installer en lokal mysql database (f.eks mariadb), og lage databasen wallet_service
-4. Kjør sql koden i /test/data-dumps
-5. Lag en fil som heter ".config" ytterst i filstrukturen
-6. Skriv "<database_brukernavn>:<database_passord>@tcp(localhost:3306)" inni .config
-7. Skriv "go get github.com/go-sql-driver/mysql" i terminalen
+1. Installer Golang og Rust
+```
+git clone https://gitlab.stud.idi.ntnu.no/dilawarm/two-phase-commit.git
+cd two-phase-commit
+```
+2. Installer en lokal mysql database (f.eks mariadb), og lag en database som heter `wallet_service`
+```
+cd test/data-dumps
+mysql -u <database_brukernavn> -p wallet_service < wallet-dump.sql
+mysql -u <database_brukernavn> -p order_service < order-dump.sql
+cd ../..
+touch .config
+echo "<database_brukernavn>:<database_passord>@tcp(localhost:3306)" > .config
+go get github.com/go-sql-driver/mysql
+```
 __Gjør enten 8 eller 9__
-8. Kjør /bin/bash runservers
-9. Kjør cargo run, go run /microservices/wallet.go og go run /microservices/order.go
-10. Klienten er nå tilgjengelig på http://127.0.0.1:3000
+
+8.
+```
+/bin/bash runservers
+```
+
+9.
+```
+go run microservices/order.go
+go run microservices/wallet.go
+cargo run
+```
+10. Microservicene kjører på http://127.0.0.1:3332 og http://127.0.0.1:3335, og Orchestrator kjører på http://127.0.0.1:3000.
+
 
 ## Hvordan teste løsningen
 
-Løsningen vår blir testet automatisk med CI/CD. Et eksempel på en velllykket pipeline er ... . Dere kan også teste løsningen vår på http://35.223.240.171:3000/. Her brukes serverne på Google Cloud, så denne lenken brukes for å teste skyløsningen vår. Dere kan også kjøre tester lokalt på følgende måte:
-1. cd test && npm install
-2. Endre host, username og password i config.json slik at passer databasen dere har satt opp.
+Løsningen vår blir testet automatisk med CI/CD. Den består av 2 stages, test og deploy. I test kjører vi serverne i bakgrunnen på Docker, og etter det kjøres testene. 
+
+![](images/test.png)
+
+Vi har brukt JEST for å skrive testene. Disse testene sender ulike HTTP-POST-requests til orchestrator, og sjekker svaret fra orchestrator etter at microservicene har svart. Et eksempel på en velllykket pipeline er https://gitlab.stud.idi.ntnu.no/dilawarm/two-phase-commit/pipelines/82849 . Dere kan også teste løsningen vår på http://35.223.240.171:3000/. Her brukes serverne på Google Cloud, så denne lenken brukes for å teste skyløsningen vår. Dere kan også kjøre tester lokalt på følgende måte:
+1. Installer Node
+```
+cd test
+npm install
+```
+2. Endre host, username og password i config.json slik at det passer databasene dere har satt opp.
 3. Kjør serverne (se punkt 8 eller 9 i __Installasjonsinstruksjoner__)
-4. npm test
+```
+npm test
+```
