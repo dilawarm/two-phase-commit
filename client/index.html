@@ -4,40 +4,83 @@
   <meta charset="utf-8">
   <title>Client</title>
   <base href="/">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <!--Import Google Icon Font-->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <!--Import materialize.css-->
+  <!-- Compiled and minified CSS -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+
+  <!-- Compiled and minified JavaScript -->
+  <script type="text/javascript" src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <script>
+    $(document).ready(function(){
+      $('select').formSelect();
+    });
+  </script>
 </head>
 <body>
-    <h1>Client</h1>
-<h1>Your user ID: </h1>
-<input id = "user_id" type = "number">
-<br>
-<br>
-<br>
+  <div class="container">
+    <h1 class="teal-text center">
+      <i class="material-icons">device_hub</i>
+      <i class="material-icons">device_hub</i>
+      <i class="material-icons">device_hub</i>
+      Two-phase commit
+      <i class="material-icons">device_hub</i>
+      <i class="material-icons">device_hub</i>
+      <i class="material-icons">device_hub</i>
+    </h1>
+  <div class="row">
+  <form class="col s12">
+  <div class="row">
+  <div class="input-field col s6" style="text-align: center;">
+  <h3>User ID:</h3>
+    <input id = "user_id" type = "number">
+</div>
+<div class="input-field col s6">
+  <h3>Select product</h3>
+  <select id = "items">
+    <option value = "1">carrot, price : 10</option>
+    <option value = "2">computer, price : 100</option>
+    <option value = "3">bitmask, price : 1010</option>
+    <option value = "4">potato, price : 10</option>
+    <option value = "5">server, price: 1000</option>
+    <option value = "6">compiler, price : 21</option>
+  </select>
+  </div>
+</div>
+</form>
+</div>
 
-<h1>Select product</h1>
-<select id = "items">
-  <option value = "1">carrot, price : 10</option>
-  <option value = "2">computer, price : 100</option>
-  <option value = "3">bitmask, price : 1010</option>
-  <option value = "4">potato, price : 10</option>
-  <option value = "5">server, price: 1000</option>
-  <option value = "6">compiler, price : 21</option>
-</select>
-<br>
-<h1>Select amount</h1>
+<div class="row" style="margin-left: 30%;">
+  <div class="input-field col s6" style="text-align: center;">
+<h3>Select amount</h3>
 <input type = "number" id = "amount">
+<a class="waves-effect waves-light btn" onclick="add()"><i class="material-icons left">add_circle</i>Add item</a>
+</div>
+</div>
 
-<button type = "button" onclick="add()">Add item</button>
-<p id = "listofitems"></p>
+<h5><b>Items in Cart: </b></h5>
+<h6 id = "listofitems"></h6>
+<h5><b>Total price:</b></h5>
+<h6 id = "totalprice">0,-</h6>
 
-<button type = "button" onclick="send()">Order</button>
 
-<h2>Output from servers: </h2>
-<p id = "output"></p>  
+<button class="btn waves-effect waves-light" type="submit" name="action" onclick="send()">Order
+  <i class="material-icons right">shopping_cart</i>
+</button>
+      
+
+<h3>Output from servers: </h3>
+<h4 id = "output"></h4>
+</div>
 </body>
 
 <script>
+
     let items = [];
     let price = 0;
     let outputText = "";
@@ -55,6 +98,7 @@
             }
             outputText += select.options[select.selectedIndex].innerHTML.split(",")[0] + " x " + amount + "\n";
             document.getElementById("listofitems").innerText = outputText;
+            document.getElementById("totalprice").innerText = price + ",-";
         }
     }
 function send(){
@@ -70,8 +114,8 @@ function send(){
         "amount": price,
         "items": items
     }
-    
-    fetch("http://35.223.240.171:3000/purchase", {
+    // 35.223.240.171
+    fetch("http://localhost:3000/purchase", {
       method: "POST",
       headers: {
           'Content-Type': 'application/json',
@@ -80,13 +124,21 @@ function send(){
     })
     .then(response => response.text())
     .then(data => {
+        outputText = "";
         console.log(data);
         let output = document.getElementById("output");
         output.innerText = data;
+        document.getElementById("user_id").value = "";
+        document.getElementById("amount").value = "";
+        let select = document.getElementById("items");
+        select.options[select.selectedIndex].value = "";
+        document.getElementById("listofitems").innerText = "";
+        console.log(items);
     })
     .catch((error) => {
       console.error('Error:', error);
     });
+    items = [];
 }
     
 </script>

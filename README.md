@@ -75,7 +75,11 @@ Lagd et mer utvidet system for å kunne se mer om hva som ligger i databasen, fo
 Vi kunne også ha implementert Kubernetes for å ha et mer skalerbart system, da det ofte brukes i kombinasjon med microservices. 
 
 ## Eksempler 
+Ved kjøring av serverne lokalt har vi mulighet til å åpne klienten som er servert av orchestrator lokalt på http://localhost:3000
 
+![]()
+
+Her sender vi en forespørsel for bruker med bruker-id 1 og bestiller 5 poteter. dette sendes som en post-request til o
 
 ## Installasjonsinstruksjoner
 
