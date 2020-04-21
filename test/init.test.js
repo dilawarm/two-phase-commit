@@ -7,7 +7,6 @@ var mysql = require("mysql");
 const runsqlfile = require("./runsqlfile.js");
 
 let config = require("./config")
-console.log(config.user)
 
 
 var pool1 = mysql.createPool({
@@ -60,7 +59,6 @@ test("valid order", done=>{
       })
       .then(response => response.text())
       .then(data => {
-          console.log(data);
           expect(data).toBe("success");
           done();
       })
@@ -87,7 +85,6 @@ test("invalid user id", done=>{
       })
       .then(response => response.text())
       .then(data => {
-          console.log(data);
           expect(data).toBe("User does not exist");
           done();
       })
@@ -113,7 +110,6 @@ test("Price is greater than balance", done=>{
       })
       .then(response => response.text())
       .then(data => {
-          console.log(data);
           expect(data).toBe("Balance too low");
           done();
       })
@@ -139,7 +135,6 @@ test("not enough in stock", done=>{
       })
       .then(response => response.text())
       .then(data => {
-          console.log(data);
           expect(data).toBe("Not in stock");
           done();
       })
