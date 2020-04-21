@@ -1,5 +1,4 @@
 # Two-Phase-Commit
-[Lenke til Continious Integration Løsning](https://gitlab.stud.idi.ntnu.no/dilawarm/two-phase-commit)
 
 ## Forfattere
 
@@ -159,7 +158,7 @@ Løsningen vår blir testet automatisk med CI/CD. Den består av 2 stages, test 
 
 ![](images/test.png)
 
-Vi har brukt JEST for å skrive testene. Disse testene sender ulike HTTP-POST-requests til orchestrator, og sjekker svaret fra orchestrator etter at microservicene har svart. Et eksempel på en velllykket pipeline er https://gitlab.stud.idi.ntnu.no/dilawarm/two-phase-commit/pipelines/82849 . Dere kan også teste løsningen vår på http://35.223.240.171:3000/. Her brukes serverne på Google Cloud, så denne lenken brukes for å teste skyløsningen vår. Dere kan også kjøre tester lokalt på følgende måte:
+Vi har brukt JEST for å skrive testene. Disse testene sender ulike HTTP-POST-requests til orchestrator, og sjekker svaret fra orchestrator etter at microservicene har svart. Et eksempel på en velllykket pipeline er ... . Dere kan også teste løsningen vår på :) Her brukes serverne på Google Cloud, så denne lenken brukes for å teste skyløsningen vår. Dere kan også kjøre tester lokalt på følgende måte:
 1. Installer Node
 ```
 cd test
