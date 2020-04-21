@@ -5,7 +5,7 @@ path = "orchestrator.rs"
 [package]
 name = "orchestrator"
 version = "0.1.0"
-authors = ["emir. d"]
+authors = ["Emir. D", "Dilawar. M", "Håvard. M"]
 
 [dependencies]
 serde = { version = "1.0", features = ["derive"] }
