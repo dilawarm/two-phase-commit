@@ -16,12 +16,11 @@ fn main() {
     // IP addresses are of micro services are read from file
     let contents =
         fs::read_to_string("./addresses").expect("Something went wrong reading the file");
-    println!("{}", contents);
     let addresses: Vec<&str> = contents.split(" ").collect();
     let listen: &str = addresses[0];
+    println!("Running on {}:3000", listen);
     let walletnumbers: Vec<&str> = addresses[1].split(".").collect();
     let ordernumbers: Vec<&str> = addresses[2].split(".").collect();
-    println!("{}", ordernumbers[0]);
     let wallet_ip: [u8; 4] = [
         walletnumbers[0].parse::<u8>().unwrap(),
         walletnumbers[1].parse::<u8>().unwrap(),
@@ -34,8 +33,6 @@ fn main() {
         ordernumbers[2].parse::<u8>().unwrap(),
         ordernumbers[3].parse::<u8>().unwrap(),
     ];
-    println!("{:?}", wallet_ip);
-    println!("{:?}", order_ip);
 
     // The server listens for http requests on port 3000
     let mut threads = Vec::new();
