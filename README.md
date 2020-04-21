@@ -163,7 +163,7 @@ Vi har brukt JEST for å skrive testene. Disse testene sender ulike HTTP-POST-re
 cd test
 npm install
 ```
-2. Endre host, username og password i config.json slik at det passer databasene dere har satt opp.
+2. Endre host, username og password i ```config.json``` slik at det passer databasene dere har satt opp.
 3. Kjør serverne (se punkt 8 eller 9 i __Installasjonsinstruksjoner__)
 ```
 npm test
