@@ -77,7 +77,7 @@ Vi kunne også ha implementert Kubernetes for å ha et mer skalerbart system, da
 ## Eksempler 
 Ved kjøring av serverne lokalt har vi mulighet til å åpne klienten som er servert av orchestrator lokalt på http://localhost:3000
 
-![]()SETT INN BILDE AV POTETBESTILLING I KLIENT HER
+![](images/potato_client)
 
 Her sender vi en forespørsel for bruker med bruker-id 1 og bestiller 5 poteter. dette sendes som en post-request til orchestrator på port 3000:
 
@@ -103,8 +103,14 @@ Under hele transaksjonen blir utskriften på orchestrator slik:
 
 ![](images/5potatoes.png)
 
-Første linje er selve JSON-dataen orchestrator mottar fra klient, og 
+Første linje er selve JSON-dataen orchestrator mottar fra klient. På fjerde linje ser vi tallet microservicene svarer med. Ettersom transaksjonen var vellykket og alt er i orden svarer begge servicene med tallet 1, som betyr "OK PREPARE". Da ber koordinatoren begge servicene om å commite transaksjonen og sender til slutt svarmelding til klienten om at transaksjonen var vellykket. 
 
+Ved forsøk på å gjøre en transaksjon på en bruker som ikke eksisterer vil utskriften for orchestrator se slik ut: 
+
+![](images/userDoesNotExist.png)
+
+Her har vi gjort samme transaksjon, bare med en annen bruker-id som ikke eksisterer i "wallet" databasen. Når en transaksjon feiler prøver orchestrator å gjøre transaksjonen på nytt opptil 5 ganger før den sier ifra om at den ikke kan utføre transaksjonen. 
+På forsøk nummer 3 ser vi at order også sier at brukeren har "uncommited transactions". Dette er fordi den prøver på nytt raskt med en ny koordinator før den forrige transaksjonen ble helt avsluttet i microservicen. 
 
 ## Installasjonsinstruksjoner
 1. Installer Golang og Rust
