@@ -48,7 +48,6 @@ func handlePrepare(conn net.Conn, password string) micro.Prep {
 	list.List[user_id] = true
 	list.Mux.Unlock()
 
-
 	if err != nil {
 		return micro.Prep{3, nil, user_id}
 	}
@@ -59,7 +58,7 @@ func handlePrepare(conn net.Conn, password string) micro.Prep {
 	}
 
 	defer db.Close()
-	
+
 	// Get user balance
 	results, err := db.Query("SELECT * FROM wallet WHERE user_id=?", user_id)
 	if err != nil {
@@ -120,7 +119,7 @@ func main() {
 	}
 
 	defer l.Close()
-	fmt.Println("Listening on " + host + ":" + CONN_PORT)
+	fmt.Println("Wallet microservice listening on " + host + ":" + CONN_PORT)
 	for {
 
 		conn, err := l.Accept()

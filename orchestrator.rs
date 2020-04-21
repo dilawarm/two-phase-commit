@@ -18,7 +18,7 @@ fn main() {
         fs::read_to_string("./addresses").expect("Something went wrong reading the file");
     let addresses: Vec<&str> = contents.split(" ").collect();
     let listen: &str = addresses[0];
-    println!("Running on {}:3000", listen);
+    println!("Orchestrator running on {}:3000", listen);
     let walletnumbers: Vec<&str> = addresses[1].split(".").collect();
     let ordernumbers: Vec<&str> = addresses[2].split(".").collect();
     let wallet_ip: [u8; 4] = [

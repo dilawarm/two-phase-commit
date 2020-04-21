@@ -52,7 +52,6 @@ func handlePrepare(conn net.Conn, password string) micro.Prep {
 		items[item]++
 	}
 
-
 	list.Mux.Lock()
 	// Check if the user is busy
 	if list.List[user_id] {
@@ -125,7 +124,7 @@ func main() {
 		os.Exit(1)
 	}
 	defer socket.Close()
-	fmt.Println("Listening on " + host + ":" + CONN_PORT)
+	fmt.Println("Order microservice listening on " + host + ":" + CONN_PORT)
 
 	for {
 

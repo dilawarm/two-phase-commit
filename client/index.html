@@ -91,7 +91,6 @@
         let chosenitem = parseInt(select.options[select.selectedIndex].value);
         let currentprice = parseInt(select.options[select.selectedIndex].innerHTML.split(":")[1].trim());
         let amount = parseInt(document.getElementById("amount").value);
-        console.log(chosenitem);
         if(amount>0){
             for (let i = 0; i<amount; i++){
                 items.push(chosenitem);
@@ -111,7 +110,6 @@ function send(){
         "amount": price,
         "items": items
     }
-    console.log(items);
     fetch("http://35.223.240.171:3000/purchase", {
       method: "POST",
       headers: {
