@@ -104,10 +104,6 @@
 function send(){
     let user_id = parseInt(document.getElementById("user_id").value);
 
-    console.log("USER ID = ", user_id);
-    console.log("AMOUNT = ", price);
-    console.log("ITEMS = ", items);
-
     let data = {
         "user_id": user_id,
         "account": user_id,
@@ -124,7 +120,6 @@ function send(){
     .then(response => response.text())
     .then(data => {
         outputText = "";
-        console.log(data);
         let output = document.getElementById("output");
         output.innerText = data;
         document.getElementById("user_id").value = "";
@@ -132,7 +127,7 @@ function send(){
         let select = document.getElementById("items");
         select.options[select.selectedIndex].value = "";
         document.getElementById("listofitems").innerText = "";
-        console.log(items);
+        document.getElementById("totalprice").innerText = 0 + ",-";
     })
     .catch((error) => {
       console.error('Error:', error);
