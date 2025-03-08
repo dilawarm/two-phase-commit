@@ -1,3 +1,18 @@
+//! Orchestrator Service for E-commerce System
+//!
+//! This module implements a transaction orchestrator that coordinates between
+//! wallet and order microservices using a two-phase commit protocol.
+//! 
+//! The orchestrator:
+//! 1. Receives purchase requests from clients via HTTP
+//! 2. Coordinates the transaction between wallet and order services
+//! 3. Ensures atomicity by implementing two-phase commit (prepare/commit/rollback)
+//! 4. Handles error cases and service failures gracefully
+//! 
+//! The system uses TCP for inter-service communication and implements
+//! retry mechanisms for improved reliability.
+
+
 use std::fs;
 use std::io::{BufRead, BufReader, Read, Write};
 use std::net::{IpAddr, Ipv4Addr, SocketAddr, TcpListener, TcpStream};
